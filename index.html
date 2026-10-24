@@ -831,22 +831,22 @@
     var touch = matchMedia('(pointer: coarse)').matches;
     // ([x] becomes a key cap)
     var TIPS = touch ? [
-      'Spins come off the lip: hold [◀] or [▶] as you leave the snow. Nothing starts one in mid-air.',
-      'Carve into the lip with [POP] held to wind up a bigger spin.',
-      'Every kicker shows the speed it\'s built for. Too fast and you fly past the landing.',
-      '[▼] throws the skis across and brakes you. Scrub speed before a big jump.',
-      'Land with your skis along the way you\'re going, or you\'re going down.',
+      'Hold [POP] into the lip. Release to pop.',
+      'Let go mid-spin: it winds down and settles on the nearest clean landing.',
+      'A spin and a flip held together off the lip throw a cork.',
+      'A clean landing keeps your speed.',
       'Ride straight up the snow ramps and you lock onto the rail.',
-      'Pick where you drop in: the top, the park, the rails or the big air.'
+      'Pick where you drop in: the top, the park, the rails or the big air.',
+      'Spend flakes in the Shop: jackets, boards, trails and more.'
     ] : [
-      'Spins come off the lip: hold [←] or [→] as you leave the snow. Nothing starts one in mid-air.',
-      'Carve into the lip with [Space] held to wind up: every quarter second is another half turn.',
-      'Every kicker shows the speed it\'s built for. Too fast and you fly past the landing.',
-      '[↓] throws the skis across and brakes you. Scrub speed before a big jump.',
-      'In the air, hold the way you\'re turning to tuck up and spin faster, the other way to slow down.',
-      'Tip the skis further and they carve tighter. Ask for too much at speed and they drift.',
-      'Hold [↑] to tuck: half the drag, a lot more speed.',
-      'Land with your skis along the way you\'re going and your body square to the snow.'
+      'Hold [Space] into the lip. Release to pop.',
+      'Let go mid-spin: it winds down and settles on the nearest clean landing.',
+      'Hold [D] and [S] together off the lip to cork. [Q] / [E]: tail / Japan grab.',
+      'Add [↑] to a spin and a flip for a rodeo or a misty.',
+      'Find your line. A clean landing keeps your speed.',
+      'Hold [W] to pole, keep holding to tuck.',
+      'Ride straight up the snow ramps and you lock onto the rail. [A] [D] swap sides.',
+      'Chain tricks without stopping to build your line multiplier.'
     ];
     var KICK = [0.27, 0.58, 0.84];
     var shown = 0, target = 0, raf = 0, len = 0, path = null, carve = null, rider = null, lastPuff = 0, kicked = 0;
@@ -1137,18 +1137,15 @@
 <div id="howto" class="panel hidden"><div class="card wide">
   <h2>HOW TO PLAY</h2>
   <div class="keys2">
-    <div class="h">Real physics</div>
-    <span>The snow</span><span>Gravity, snow friction and air drag set your speed: nothing holds you back or pushes you along. Steep pitches get fast, flats slow you down</span>
-    <span><kbd>←</kbd><kbd>→</kbd></span><span>Tip the skis onto their edges. A tipped ski bends and carves its own arc (tighter the further you tip it). Ask for more than the snow holds at speed and the skis drift sideways, scrubbing speed: that's how you control it</span>
-    <span><kbd>↑</kbd></span><span>Tuck (less drag, much faster) · slow on the flat it skates</span>
-    <span><kbd>↓</kbd></span><span>Hockey stop: the skis go across and their edges brake you. Check your speed before a kicker: each one shows the speed it's built for</span>
-    <div class="h">Jumps</div>
-    <span><kbd>SPACE</kbd></span><span>Hold to load your legs, let go to pop. Up a kicker, let go at the lip (up to a quarter second early still counts)</span>
-    <span>Throw it at the lip</span><span>In the air nothing can start a spin: it has to come off the lip. Hold <kbd>←</kbd>/<kbd>→</kbd> or <kbd>↑</kbd>/<kbd>↓</kbd> as you leave the snow (the first moment of the air) to throw a spin or a flip. Both together throw a cork or a bio</span>
-    <span>How much</span><span>Carve into the lip with <kbd>SPACE</kbd> loaded to wind up: every quarter second wound is another half turn (up to 1080). Thrown cold you get a 360, or a 180 on a small jump. Hold a flip key through the takeoff on a big jump for a double</span>
-    <span>In the air</span><span>Your momentum is set; you change your shape. Hold the way you're turning (or grab) to tuck up and turn faster, the other way to open up and slow down. Let go and you hold the shape you threw it in, which brings it round on the landing</span>
-    <span>Landing</span><span>Come down with your skis along the way you're going (forwards or switch) and your body square to the snow. Sideways or tipped over, you go down. Over- or undershoot the landing and the hit is harder</span>
-    <span>Combos</span><span>Quick taps of the arrows right off the lip throw a trick too: <kbd>←</kbd><kbd>←</kbd> 360, <kbd>↓</kbd><kbd>↓</kbd><kbd>↓</kbd> backflip, <kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> cork 720. Grab combos (<kbd>↓</kbd><kbd>↓</kbd> mute) work any time</span>
+    <div class="h">Cork7's controls</div>
+    <span><kbd>A</kbd><kbd>D</kbd></span><span>Carve · in the air: spin. Lean further to carve harder or spin faster</span>
+    <span><kbd>W</kbd></span><span>Pole, then tuck (held 1.25 s, or past 65 km/h) · off a lip: front flip</span>
+    <span><kbd>S</kbd></span><span>Brake · off a lip: backflip</span>
+    <span><kbd>SPACE</kbd></span><span>Hold to load, let go to pop. Hold it through a kicker's lip for a bigger launch</span>
+    <span><kbd>←</kbd><kbd>→</kbd></span><span>Air roll: sideflips, and with a spin a flatspin</span>
+    <span>Spin + flip</span><span>Hold a spin and a flip together off the lip (inside a quarter second) for a cork (<kbd>S</kbd>) or a bio (<kbd>W</kbd>); add <kbd>↑</kbd> for a rodeo or a misty</span>
+    <span><kbd>SHIFT</kbd><kbd>Q</kbd><kbd>E</kbd></span><span>Mute, tail and japan grabs (held, a grab spins you faster). <kbd>F</kbd><kbd>X</kbd><kbd>Z</kbd> three more</span>
+    <span>Landing</span><span>Let go and the landing assist eases you round to the nearest clean landing, square to the snow. Only coming down upside down or flat on your back takes you out</span>
     <span><kbd>.</kbd> <kbd>G</kbd></span><span>Hop round to ride backwards (keypad . or G); again to turn forwards</span>
     <span><kbd>SHIFT</kbd><kbd>Q</kbd><kbd>E</kbd><kbd>F</kbd><kbd>X</kbd><kbd>Z</kbd></span><span>Six grabs by hand. Switch keys mid-air to chain them, hold one a second to tweak it</span>
     <span><kbd>B</kbd></span><span>Butter (add ↓ for the tail) · ← → pivots a half turn, a spin you land into it with carries it to 360. A press lasts 1.5 s, then rest a second. Hold B in the air to land into a butter off a bump or a small hop (off a big jump you faceplant). 150, 300 for a 180, 600 for a 360; each butter pays less and only your first four in a run score</span>

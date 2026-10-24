@@ -1600,6 +1600,8 @@ class Game {
   // if a longer combo starts the same way it waits a beat for more taps first
   combos(inp, dt) {
     const P = this.player;
+    // (Cork7 has no tap combos: tricks are flown by hand)
+    if (P?.strict) return;
     const air = !P.onGround && !P.grind && P.crash <= 0;
     const st = (this.cst ??= { buf: '', last: 0, down: {}, shown: 0 });
     if (!air) { st.fired = null; if (st.buf) { st.buf = ''; this.comboHud(); } return; }
@@ -1639,8 +1641,6 @@ class Game {
     if (!spec) { this.comboHud(); return; }
     const up = !!(st.fired && P.auto?.combo === st.fired && c.seq.startsWith(st.fired));
     if ((P.auto || P.trickType) && !up) this.status('ONE AT A TIME');
-    // (real physics: a spin or a flip is thrown off the lip, not in the middle of the air)
-    else if (P.real && (spec.spin || spec.flips) && P.airTime > 0.48) this.status('TOO LATE · THROW IT OFF THE LIP');
     else if (P.flightTime() < (P.strict ? 0.12 : 0.45)) this.status('TOO LATE · ' + name);
     else {
       // an upgrade carries on from where the first one started turning
