@@ -969,9 +969,9 @@ export class SkierModel {
       T.copy(ch)
         // (a Cork7 rider lets his arms hang: the hands by the hips, a little forward and out, the
         // elbows soft, the poles trailing)
-        .addScaledVector(j.side, s * (0.31 - tall * 0.04 + st * 0.03 + sk * 0.07 + inside * 0.06))
+        .addScaledVector(j.side, s * (0.31 - tall * 0.06 + st * 0.03 + sk * 0.07 + inside * 0.06))
         .addScaledVector(j.fwd, 0.42 - tall * 0.3 + lead * 0.14 * (1 - tall * 0.5) - st * 0.08)
-        .addScaledVector(j.spine, -0.17 - tall * 0.34 + inside * 0.12 * (1 - tall * 0.5) - st * 0.05);
+        .addScaledVector(j.spine, -0.17 - tall * 0.46 + inside * 0.12 * (1 - tall * 0.5) - st * 0.05);
       // (they swing with the body's weight)
       T.x += lr * 0.2; T.y += Math.abs(lr) * 0.08; T.z -= lf * 0.1;
       h.lerp(T, w * (1 - p.tuck));

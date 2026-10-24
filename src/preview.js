@@ -75,8 +75,8 @@ export class Preview {
     const m = this.model;
     if (this.demoSpec && this.el.id === 'demo') { this.renderDemo(dt); return; }
     if (this.rail) this.rail.visible = false;
-    // standing ready, breathing a little
-    m.pose({ crouch: 0.08 + Math.sin(this.t * 1.7) * 0.02, tuck: 0, lean: 0, angulate: 0.5, plow: 0, air: 0, grab: 0, polePlant: 0, poleSide: 1, crash: false, t: this.t, twist: 0, edge: 0, look: Math.sin(this.t * 0.4) * 0.25 });
+    // standing ready, breathing a little (tall, as Cork7's locker has him)
+    m.pose({ tall: this.board ? 0 : 1, crouch: 0.08 + Math.sin(this.t * 1.7) * 0.02, tuck: 0, lean: 0, angulate: 0.5, plow: 0, air: 0, grab: 0, polePlant: 0, poleSide: 1, crash: false, t: this.t, twist: 0, edge: 0, look: Math.sin(this.t * 0.4) * 0.25 });
     // a snowboarder is turned so you see the rider, not the edge of the board
     m.group.position.set(0, 0, 0);
     m.group.quaternion.identity();
@@ -130,7 +130,7 @@ export class Preview {
         yaw = sd * spinRad; pitch = flips * Math.PI * 2;
       }
     }
-    m.pose({ crouch, tuck: 0, lean: 0, angulate: 0.5, plow: 0, air: inAir, grab, grabKind: D.grab ?? 'mute', polePlant: 0, poleSide: 1, crash: false, t: this.t, twist: 0, edge: 0, look: 0,
+    m.pose({ tall: this.board ? 0 : 1, crouch, tuck: 0, lean: 0, angulate: 0.5, plow: 0, air: inAir, grab, grabKind: D.grab ?? 'mute', polePlant: 0, poleSide: 1, crash: false, t: this.t, twist: 0, edge: 0, look: 0,
       shifty, daffy, press, spinRate: inAir && D.spin ? 8 : 0, switch: false });
     q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), base + yaw);
     const tr = D.type && TRICKS[D.type];

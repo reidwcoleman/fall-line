@@ -432,9 +432,10 @@ finish(bbind, 0.04)
 OBJS.append(bbind)
 
 # ------------------------------------------------------------------ pole (grip at the origin, tip down)
-mat('p_grip', (0.07, 0.07, 0.08), RUBBER)
+# (Cork7's: pale yellow grips and baskets)
+mat('p_grip', (0.86, 0.83, 0.5), RUBBER)
 mat('p_shaft', (1, 1, 1), TINT)
-mat('p_plastic', (0.13, 0.13, 0.14), PLASTIC)
+mat('p_plastic', (0.88, 0.84, 0.42), PLASTIC)
 mat('p_tip', (0.55, 0.57, 0.6), METAL)
 POLE = 1.18
 

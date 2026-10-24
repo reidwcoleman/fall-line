@@ -1,48 +1,47 @@
-// The riders' own figure, after Cork7's: a chunky park skier, one smooth skinned mesh in flat
-// colour. A boxy puffy hooded shell cut at the hips, long straight baggy pants stacked over the
-// boots, fat sleeves, big mitts, a big head under the helmet. It comes out as a "kit" in the same
-// shape the scanned bodies load as (avatar.js): the same bone names, rest pose and limb lengths,
-// so AvatarRig poses it and the gear sits on it. The figure itself is modelled in Blender
-// (blender/rider.py); the loft here is only what's drawn if that file doesn't arrive.
+// The riders' own figure, built to Cork7's: one smooth skinned mesh in flat colour. A long
+// straight shell down past the seat with a funnel collar and the hood lying on the back, dropped
+// shoulders and slim sleeves, black gloves, straight baggy pants over the boots, a big head with
+// a long face under the helmet, and Cork7's shorter legs. It comes out as a "kit" in the same
+// shape the scanned bodies load as (avatar.js): the same bone names, its own rest pose and limb
+// lengths, so AvatarRig poses it and the gear sits on it. The figure itself is modelled in
+// Blender (blender/rider.py); the loft here is only what's drawn if that file doesn't arrive.
 
 // the head (and the helmet on it) grown from the head bone: blender/rider.py HS must match
 export const HEAD_SCALE = 1.15;
-// the torso this much shorter than the skeleton below was drawn: the chest squeezed between the
-// waist and the shoulders, everything above (and the arms) brought down. blender/rider.py TORSO
-// must match
-export const TORSO = 0.075;
-const TY = (y) => (y <= 0.93 ? y : y >= 1.38 ? y - TORSO : 0.93 + (y - 0.93) * (1 - TORSO / 0.45));
-const ARMY = /Clavicle|UpperArm|Forearm|Hand/;
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { loadGLB, plainGeometry } from './models.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
-// the rest pose (an A-pose, facing +z, +x the rider's left), the bones and their parents
+// the rest pose (an A-pose, facing +z, +x the rider's left), the bones and their parents:
+// blender/rider.py BONES must match
 const BONES = [
-  ['Bip01', V(0, 0.895, 0), -1],
-  ['Bip01_Pelvis', V(0, 0.895, 0), 'Bip01'],
-  ['Bip01_Spine', V(0, 1.015, 0), 'Bip01_Pelvis'],
-  ['Bip01_L_Thigh', V(0.092, 0.895, 0), 'Bip01_Spine'],
-  ['Bip01_L_Calf', V(0.108, 0.497, 0.012), 'Bip01_L_Thigh'],
-  ['Bip01_L_Foot', V(0.114, 0.102, -0.012), 'Bip01_L_Calf'],
-  ['Bip01_R_Thigh', V(-0.092, 0.895, 0), 'Bip01_Spine'],
-  ['Bip01_R_Calf', V(-0.108, 0.497, 0.012), 'Bip01_R_Thigh'],
-  ['Bip01_R_Foot', V(-0.114, 0.102, -0.012), 'Bip01_R_Calf'],
-  ['Bip01_Spine1', V(0, 1.168, 0), 'Bip01_Spine'],
-  ['Bip01_Spine2', V(0, 1.321, -0.01), 'Bip01_Spine1'],
-  ['Bip01_Neck', V(0, 1.521, -0.012), 'Bip01_Spine2'],
-  ['Bip01_Head', V(0, 1.587, 0.008), 'Bip01_Neck'],
-  ['Bip01_L_Clavicle', V(0.073, 1.459, -0.024), 'Bip01_Neck'],
-  ['Bip01_L_UpperArm', V(0.205, 1.43, -0.025), 'Bip01_L_Clavicle'],
-  ['Bip01_L_Forearm', V(0.41, 1.232, -0.02), 'Bip01_L_UpperArm'],
-  ['Bip01_L_Hand', V(0.58, 1.05, 0.075), 'Bip01_L_Forearm'],
-  ['Bip01_R_Clavicle', V(-0.073, 1.459, -0.024), 'Bip01_Neck'],
-  ['Bip01_R_UpperArm', V(-0.205, 1.43, -0.025), 'Bip01_R_Clavicle'],
-  ['Bip01_R_Forearm', V(-0.41, 1.232, -0.02), 'Bip01_R_UpperArm'],
-  ['Bip01_R_Hand', V(-0.58, 1.05, 0.075), 'Bip01_R_Forearm'],
+  ['Bip01', V(0, 0.82, 0), -1],
+  ['Bip01_Pelvis', V(0, 0.82, 0), 'Bip01'],
+  ['Bip01_Spine', V(0, 0.93, 0), 'Bip01_Pelvis'],
+  ['Bip01_L_Thigh', V(0.09, 0.82, 0), 'Bip01_Spine'],
+  ['Bip01_L_Calf', V(0.104, 0.46, 0.012), 'Bip01_L_Thigh'],
+  ['Bip01_L_Foot', V(0.112, 0.1, -0.012), 'Bip01_L_Calf'],
+  ['Bip01_R_Thigh', V(-0.09, 0.82, 0), 'Bip01_Spine'],
+  ['Bip01_R_Calf', V(-0.104, 0.46, 0.012), 'Bip01_R_Thigh'],
+  ['Bip01_R_Foot', V(-0.112, 0.1, -0.012), 'Bip01_R_Calf'],
+  ['Bip01_Spine1', V(0, 1.04, 0), 'Bip01_Spine'],
+  ['Bip01_Spine2', V(0, 1.15, -0.01), 'Bip01_Spine1'],
+  ['Bip01_Neck', V(0, 1.36, -0.012), 'Bip01_Spine2'],
+  ['Bip01_Head', V(0, 1.458, 0.008), 'Bip01_Neck'],
+  ['Bip01_L_Clavicle', V(0.075, 1.29, -0.024), 'Bip01_Neck'],
+  ['Bip01_L_UpperArm', V(0.235, 1.225, -0.025), 'Bip01_L_Clavicle'],
+  ['Bip01_L_Forearm', V(0.458, 1.01, -0.02), 'Bip01_L_UpperArm'],
+  ['Bip01_L_Hand', V(0.642, 0.812, 0.083), 'Bip01_L_Forearm'],
+  ['Bip01_R_Clavicle', V(-0.075, 1.29, -0.024), 'Bip01_Neck'],
+  ['Bip01_R_UpperArm', V(-0.235, 1.225, -0.025), 'Bip01_R_Clavicle'],
+  ['Bip01_R_Forearm', V(-0.458, 1.01, -0.02), 'Bip01_R_UpperArm'],
+  ['Bip01_R_Hand', V(-0.642, 0.812, 0.083), 'Bip01_R_Forearm'],
 ];
+// the chest band (Cork7's starter shell), as heights on the body: it runs round the sleeves too,
+// by the distance down the arm from the shoulder
+const BAND = [0.96, 1.125];
 
 // a ring of the loft: centre, its two axes (u x v points on along the tube), radii, roundness
 // (2 an ellipse, higher squarer), the bones it follows, and the body part (avatar.js partOf)
@@ -124,9 +123,7 @@ export function toyKit() {
   if (KIT) return KIT;
   const names = BONES.map((b) => b[0]);
   const I = (n) => names.indexOf(n);
-  // (the loft is drawn on the skeleton as it was, then brought to the shorter torso)
-  const rawP = BONES.map((b) => b[1].clone());
-  const bindP = BONES.map(([n, p]) => (ARMY.test(n) ? p.clone().setY(p.y - TORSO) : p.clone().setY(TY(p.y))));
+  const bindP = BONES.map((b) => b[1].clone());
   const parents = BONES.map((b) => (b[2] === -1 ? -1 : I(b[2])));
   // every bone sits square to the world at rest, bar the hands: their x runs out along the
   // fingers (that's where the rig finds the palms)
@@ -142,90 +139,87 @@ export function toyKit() {
     return { p: bindP[i].clone().sub(bindP[p]).applyQuaternion(pq), q: pq.multiply(bindQ[i]) };
   });
   const boneInverses = names.map((n, i) => new THREE.Matrix4().compose(bindP[i], bindQ[i], V(1, 1, 1)).invert());
-  const P = (n) => rawP[I(n)];
+  const P = (n) => bindP[I(n)];
   const geos = [];
   const UP = V(0, 1, 0), X = V(1, 0, 0);
 
   // the shell: hem to collar up the spine. Which bones by height: pelvis, the spine's three, the neck
+  const SP = [['Bip01_Pelvis', 0.82], ['Bip01_Spine', 0.93], ['Bip01_Spine1', 1.04], ['Bip01_Spine2', 1.15], ['Bip01_Neck', 1.36]];
   const spineW = (y) => {
-    const st = [['Bip01_Pelvis', 0.895], ['Bip01_Spine', 1.015], ['Bip01_Spine1', 1.168], ['Bip01_Spine2', 1.321], ['Bip01_Neck', 1.521]];
-    if (y <= st[0][1]) return { [st[0][0]]: 1 };
-    for (let i = 0; i + 1 < st.length; i++) if (y <= st[i + 1][1]) { const t = (y - st[i][1]) / (st[i + 1][1] - st[i][1]); return { [st[i][0]]: 1 - t, [st[i + 1][0]]: t }; }
+    if (y <= SP[0][1]) return { [SP[0][0]]: 1 };
+    for (let i = 0; i + 1 < SP.length; i++) if (y <= SP[i + 1][1]) { const t = (y - SP[i][1]) / (SP[i + 1][1] - SP[i][1]); return { [SP[i][0]]: 1 - t, [SP[i + 1][0]]: t }; }
     return { Bip01_Neck: 1 };
   };
-  // (the hem rides with the thighs a little, so a knee lifted into a grab doesn't come through it)
-  // (the front more than the back, and the middle with both legs)
-  const hemW = (y, k) => (p) => {
-    const kk = k * (0.55 + 0.45 * Math.min(1, Math.max(0, (p.z + 0.1) / 0.25)));
-    const l = 0.5 + 0.5 * Math.max(-1, Math.min(1, p.x / 0.12));
+  // (below the hips the shell rides with the thighs a little, so a knee lifted into a grab
+  // doesn't come through it: the front more than the back, each side with its own leg)
+  const shellW = (y) => (p) => {
+    const k = Math.max(0, Math.min(1, (0.82 - y) / 0.12)) * 0.6;
+    const kk = k * (0.5 + 0.5 * Math.min(1, Math.max(0, (p.z + 0.12) / 0.26)));
+    const l = 0.5 + 0.5 * Math.max(-1, Math.min(1, p.x / 0.1));
     return { ...Object.fromEntries(Object.entries(spineW(y)).map(([b, v]) => [b, v * (1 - kk)])), Bip01_L_Thigh: kk * l, Bip01_R_Thigh: kk * (1 - l) };
   };
   //            y      half width  half depth  z      squareness
-  const SHELL = [[0.8, 0.208, 0.172, 0.03, 2.3], [0.83, 0.206, 0.168, 0.026, 2.4], [0.88, 0.2, 0.16, 0.016, 2.5], [0.93, 0.194, 0.152, 0.006, 2.5],
-    [1.04, 0.188, 0.142, -0.004, 2.5], [1.17, 0.191, 0.141, -0.008, 2.4], [1.28, 0.195, 0.143, -0.012, 2.3], [1.355, 0.192, 0.138, -0.016, 2.2],
-    [1.405, 0.178, 0.128, -0.02, 2.1], [1.445, 0.152, 0.114, -0.022, 2.0], [1.482, 0.118, 0.098, -0.02, 2.0], [1.515, 0.092, 0.088, -0.016, 2.0],
-    [1.55, 0.081, 0.084, -0.01, 2.0], [1.585, 0.077, 0.082, -0.008, 2.0]];
-  geos.push(tube(SHELL.map(([y, a, b, z, p]) => ring(V(0, y, z), UP, X, a, b, y < 0.95 ? hemW(y, 0.7 * (1 - (y - 0.8) / 0.15)) : spineW(y), 2, p)), I, 0.05, 0.15));
+  const SHELL = [[0.7, 0.214, 0.162, -0.008, 2.5], [0.735, 0.212, 0.162, -0.01, 2.6], [0.8, 0.208, 0.16, -0.012, 2.6], [0.9, 0.204, 0.156, -0.012, 2.6],
+    [1.0, 0.202, 0.157, -0.01, 2.6], [1.1, 0.203, 0.158, -0.01, 2.5], [1.18, 0.2, 0.155, -0.012, 2.4], [1.235, 0.196, 0.149, -0.015, 2.4],
+    [1.28, 0.185, 0.14, -0.018, 2.4], [1.31, 0.162, 0.128, -0.02, 2.3], [1.335, 0.126, 0.112, -0.02, 2.1], [1.355, 0.103, 0.1, -0.016, 2.0],
+    [1.38, 0.1, 0.098, -0.008, 2.0], [1.41, 0.102, 0.1, -0.002, 2.0], [1.435, 0.104, 0.102, 0.002, 2.0]];
+  geos.push(tube(SHELL.map(([y, a, b, z, p]) => ring(V(0, y, z), UP, X, a, b, y < 0.9 ? shellW(y) : spineW(y), 2, p)), I, 0.05, -0.6));
+  // the hood, lying flat on the upper back
+  geos.push(blob(V(0, 1.32, -0.15), 0.14, 0.095, 0.04, { Bip01_Spine2: 0.6, Bip01_Neck: 0.4 }, 2, 9, UP, X, I));
 
   for (const s of [1, -1]) {
     const S = s > 0 ? 'L' : 'R', B = (n) => `Bip01_${S}_${n}`;
-    // pants: straight and loose from the hips, the hem stacked over the boot
-    const H = P(B('Thigh')).clone().add(V(0, 0.05, 0)), K = P(B('Calf')), A = P(B('Foot'));
+    // pants: one wide straight tube from the hip to the boot, the hem stacked over it
+    const H = P(B('Thigh')).clone().add(V(0, 0.06, 0)), K = P(B('Calf')), A = P(B('Foot'));
+    const out = (t) => V(s * 0.014 * Math.min(1, t), 0, 0);
     const leg = [];
-    const TH = [[0, 0.11, 0.114, { Bip01_Pelvis: 0.5, [B('Thigh')]: 0.5 }], [0.2, 0.108, 0.112, { Bip01_Pelvis: 0.15, [B('Thigh')]: 0.85 }], [0.45, 0.105, 0.109, { [B('Thigh')]: 1 }],
-      [0.72, 0.102, 0.106, { [B('Thigh')]: 1 }], [0.9, 0.101, 0.105, { [B('Thigh')]: 0.75, [B('Calf')]: 0.25 }], [1.0, 0.101, 0.105, { [B('Thigh')]: 0.5, [B('Calf')]: 0.5 }]];
-    for (const [t, a, b, w] of TH) leg.push(ring(H.clone().lerp(K, t), K.clone().sub(H), X, a * 1.0, b, w, 6));
-    // (deep front to back: the boot's cuff leans forward inside and mustn't come through the seat)
-    const SH = [[0.12, 0.104, 0.112, { [B('Thigh')]: 0.25, [B('Calf')]: 0.75 }], [0.35, 0.11, 0.124, { [B('Calf')]: 1 }], [0.55, 0.116, 0.132, { [B('Calf')]: 1 }],
-      [0.72, 0.12, 0.136, { [B('Calf')]: 1 }], [0.84, 0.124, 0.138, { [B('Calf')]: 1 }], [0.93, 0.127, 0.139, { [B('Calf')]: 1 }], [0.97, 0.128, 0.139, { [B('Calf')]: 1 }]];
-    for (const [t, a, b, w] of SH) leg.push(ring(K.clone().lerp(A, t).add(V(0, 0, -0.012 * Math.sin(t * Math.PI))), A.clone().sub(K), X, a, b, w, 7));
-    geos.push(Object.assign(tube(leg, I, 0.3, -0.25), { leg: true }));
+    const TH = [[0, 0.11, 0.108, { Bip01_Pelvis: 0.5, [B('Thigh')]: 0.5 }], [0.18, 0.106, 0.11, { Bip01_Pelvis: 0.15, [B('Thigh')]: 0.85 }], [0.4, 0.098, 0.115, { [B('Thigh')]: 1 }],
+      [0.65, 0.095, 0.124, { [B('Thigh')]: 1 }], [0.88, 0.094, 0.12, { [B('Thigh')]: 0.8, [B('Calf')]: 0.2 }], [1.0, 0.094, 0.118, { [B('Thigh')]: 0.5, [B('Calf')]: 0.5 }]];
+    for (const [t, a, b, w] of TH) leg.push(ring(H.clone().lerp(K, t).add(out(t)), K.clone().sub(H), X, a, b, w, 6));
+    const SH = [[0.12, 0.094, 0.116, { [B('Thigh')]: 0.25, [B('Calf')]: 0.75 }], [0.35, 0.093, 0.112, { [B('Calf')]: 1 }], [0.6, 0.094, 0.11, { [B('Calf')]: 1 }],
+      [0.8, 0.096, 0.112, { [B('Calf')]: 1 }], [0.92, 0.098, 0.114, { [B('Calf')]: 1 }], [1.0, 0.099, 0.115, { [B('Calf')]: 1 }], [1.1, 0.098, 0.114, { [B('Calf')]: 1 }],
+      [1.15, 0.095, 0.11, { [B('Calf')]: 1 }]];
+    for (const [t, a, b, w] of SH) leg.push(ring(K.clone().lerp(A, t).add(out(1)).add(V(0, 0, 0.012 * Math.sin(Math.min(1, t) * Math.PI))), A.clone().sub(K), X, a, b, w, 7));
+    geos.push(tube(leg, I, 0.3, -0.04));
 
-    // the sleeve: set into the shoulder, loose to a wide cuff over the mitt
-    const C0 = V(s * 0.125, 1.425, -0.024), Sh = P(B('UpperArm')), E = P(B('Forearm')), W = P(B('Hand'));
+    // the sleeve: set into the dropped shoulder, slim and straight to the cuff over the glove
+    const C0 = V(s * 0.15, 1.245, -0.024), Sh = P(B('UpperArm')), E = P(B('Forearm')), W = P(B('Hand'));
     const side = V(0, 0, 1);
     const arm = [
-      ring(C0, Sh.clone().sub(C0), side, 0.076, 0.079, { Bip01_Spine2: 0.7, [B('UpperArm')]: 0.3 }, 3),
-      ring(Sh.clone(), E.clone().sub(Sh), side, 0.074, 0.076, { Bip01_Spine2: 0.25, [B('UpperArm')]: 0.75 }, 3),
-      ring(Sh.clone().lerp(E, 0.45), E.clone().sub(Sh), side, 0.069, 0.071, { [B('UpperArm')]: 1 }, 3),
-      ring(Sh.clone().lerp(E, 0.85), E.clone().sub(Sh), side, 0.065, 0.067, { [B('UpperArm')]: 0.8, [B('Forearm')]: 0.2 }, 3),
-      ring(E.clone(), W.clone().sub(Sh), side, 0.064, 0.066, { [B('UpperArm')]: 0.5, [B('Forearm')]: 0.5 }, 4),
-      ring(E.clone().lerp(W, 0.3), W.clone().sub(E), side, 0.062, 0.064, { [B('Forearm')]: 1 }, 4),
-      ring(E.clone().lerp(W, 0.72), W.clone().sub(E), side, 0.065, 0.067, { [B('Forearm')]: 1 }, 4),
-      ring(E.clone().lerp(W, 0.9), W.clone().sub(E), side, 0.068, 0.07, { [B('Forearm')]: 0.85, [B('Hand')]: 0.15 }, 4),
+      ring(C0, Sh.clone().sub(C0), side, 0.07, 0.074, { Bip01_Spine2: 0.7, [B('UpperArm')]: 0.3 }, 3),
+      ring(Sh.clone(), E.clone().sub(Sh), side, 0.068, 0.073, { Bip01_Spine2: 0.2, [B('UpperArm')]: 0.8 }, 3),
+      ring(Sh.clone().lerp(E, 0.5), E.clone().sub(Sh), side, 0.063, 0.069, { [B('UpperArm')]: 1 }, 3),
+      ring(E.clone(), W.clone().sub(Sh), side, 0.062, 0.066, { [B('UpperArm')]: 0.5, [B('Forearm')]: 0.5 }, 4),
+      ring(E.clone().lerp(W, 0.5), W.clone().sub(E), side, 0.061, 0.064, { [B('Forearm')]: 1 }, 4),
+      ring(E.clone().lerp(W, 0.9), W.clone().sub(E), side, 0.06, 0.062, { [B('Forearm')]: 0.85, [B('Hand')]: 0.15 }, 4),
     ];
-    geos.push(Object.assign(tube(arm, I, 0.3, -0.35), { arm: true }));
-    // the mitt: a rounded paddle out along the fingers, a thumb on the inside
+    geos.push(tube(arm, I, 0.3, -0.35));
+    // the glove: a gauntlet over the cuff, a flat paddle, the thumb on the inside
     const d = W.clone().sub(E).normalize(), flat = new THREE.Vector3().crossVectors(d, V(0, 0, 1)).normalize();
-    const mitt = [];
-    for (const [t, a, b, wh] of [[-0.05, 0.044, 0.04, 0.6], [0.0, 0.046, 0.037, 0.9], [0.045, 0.048, 0.032, 1], [0.085, 0.045, 0.028, 1], [0.115, 0.036, 0.024, 1]])
-      mitt.push(ring(W.clone().addScaledVector(d, t), d, V(0, 0, 1), a, b, { [B('Hand')]: wh, [B('Forearm')]: 1 - wh }, 5));
-    geos.push(Object.assign(tube(mitt, I, 0.4, 0.7), { arm: true }));
-    const thumb = W.clone().addScaledVector(d, 0.04).addScaledVector(V(0, 0, 1), 0.035);
-    geos.push(Object.assign(blob(thumb, 0.018, 0.035, 0.018, { [B('Hand')]: 1 }, 5, 6, d.clone().add(V(0, 0, 0.8)), flat, I), { arm: true }));
+    const glove = [];
+    for (const [t, a, b, wh] of [[-0.07, 0.058, 0.058, 0.3], [-0.04, 0.06, 0.059, 0.5], [-0.012, 0.052, 0.046, 0.8], [0.025, 0.053, 0.04, 1], [0.065, 0.054, 0.037, 1], [0.1, 0.05, 0.034, 1], [0.125, 0.038, 0.027, 1]])
+      glove.push(ring(W.clone().addScaledVector(d, t), d, V(0, 0, 1), a, b, { [B('Hand')]: wh, [B('Forearm')]: 1 - wh }, 5));
+    geos.push(tube(glove, I, 0.4, 0.7));
+    const thumb = W.clone().addScaledVector(d, 0.035).addScaledVector(V(0, 0, 1), 0.04);
+    geos.push(blob(thumb, 0.02, 0.04, 0.02, { [B('Hand')]: 1 }, 5, 6, d.clone().add(V(0, 0, 0.8)), flat, I));
   }
 
   // neck and head
   geos.push(tube([
-    ring(V(0, 1.49, -0.012), UP, X, 0.056, 0.058, { Bip01_Spine2: 0.4, Bip01_Neck: 0.6 }, 1),
-    ring(V(0, 1.56, -0.004), UP, X, 0.054, 0.056, { Bip01_Neck: 0.7, Bip01_Head: 0.3 }, 1),
-    ring(V(0, 1.63, 0.004), UP, X, 0.055, 0.058, { Bip01_Head: 1 }, 1),
+    ring(V(0, 1.34, -0.014), UP, X, 0.052, 0.054, { Bip01_Spine2: 0.3, Bip01_Neck: 0.7 }, 1),
+    ring(V(0, 1.41, -0.006), UP, X, 0.05, 0.052, { Bip01_Neck: 0.7, Bip01_Head: 0.3 }, 1),
+    ring(V(0, 1.47, 0.002), UP, X, 0.052, 0.054, { Bip01_Head: 1 }, 1),
   ], I, 0.2, 0.2));
-  const HC = V(0, 1.676, 0.014), HW = { Bip01_Head: 1 };
-  const head = [blob(HC, 0.083, 0.11, 0.098, HW, 0, 12, UP, X, I), blob(HC.clone().add(V(0, -0.028, 0.094)), 0.014, 0.022, 0.017, HW, 0, 6, V(0, 1, 0.4), X, I)];
-  for (const s of [1, -1]) head.push(blob(HC.clone().add(V(s * 0.082, -0.01, -0.006)), 0.011, 0.024, 0.016, HW, 0, 6, UP, X, I));
-  const hb = P('Bip01_Head');
+  const hb = P('Bip01_Head'), HC = hb.clone().add(V(0, 0.082, 0.018)), HW = { Bip01_Head: 1 };
+  const head = [blob(HC, 0.09, 0.114, 0.104, HW, 0, 12, UP, X, I), blob(HC.clone().add(V(0, -0.05, 0.022)), 0.068, 0.06, 0.07, HW, 0, 9, UP, X, I),
+    blob(HC.clone().add(V(0, -0.034, 0.1)), 0.014, 0.022, 0.017, HW, 0, 6, V(0, 1, 0.4), X, I)];
+  for (const s of [1, -1]) head.push(blob(HC.clone().add(V(s * 0.087, -0.014, -0.012)), 0.011, 0.024, 0.016, HW, 0, 6, UP, X, I));
   for (const g of head) geos.push(g.translate(-hb.x, -hb.y, -hb.z).scale(HEAD_SCALE, HEAD_SCALE, HEAD_SCALE).translate(hb.x, hb.y, hb.z));
 
-  for (const g of geos) {
-    if (g.leg) continue;
-    const a = g.getAttribute('position');
-    for (let i = 0; i < a.count; i++) a.setY(i, g.arm ? a.getY(i) - TORSO : TY(a.getY(i)));
-  }
   const geo = mergeGeometries(geos);
   geo.computeBoundingSphere();
   // (from here on the skeleton as it is)
-  const PB = (n) => bindP[I(n)];
+  const PB = P;
   const len = (a, b) => PB(a).distanceTo(PB(b));
   const sh = [PB('Bip01_L_UpperArm'), PB('Bip01_R_UpperArm')], th = [PB('Bip01_L_Calf'), PB('Bip01_R_Calf')];
   // (stand-ins for the scanned bodies' textures, for anything that still asks for them)
@@ -244,8 +238,7 @@ export function toyKit() {
     neckY: PB('Bip01_Neck').y,
     leg: [len('Bip01_L_Thigh', 'Bip01_L_Calf'), len('Bip01_L_Calf', 'Bip01_L_Foot')],
     arm: [len('Bip01_L_UpperArm', 'Bip01_L_Forearm'), len('Bip01_L_Forearm', 'Bip01_L_Hand')],
-    // the chest band's rest heights (Cork7's starter shell; it runs round the sleeves too)
-    band: new THREE.Vector2(1.06, 1.215),
+    band: new THREE.Vector2(...BAND),
   };
   return KIT;
 }
@@ -305,9 +298,7 @@ vPart = aPart; vRest = position;
       .replace('#include <common>', `#include <common>
 varying float vPart; varying vec3 vRest;
 uniform vec3 uJacket, uJacket2, uPants, uPants2, uGloves, uSkin, uHair; uniform vec2 uPat, uBand;
-float tyH(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
-// (a height on the shorter torso back to where it was drawn: the bands and the zip are placed there)
-float tyOld(float y) { return y <= 0.93 ? y : y >= 1.38 - ${TORSO.toFixed(4)} ? y + ${TORSO.toFixed(4)} : 0.93 + (y - 0.93) / (1.0 - ${(TORSO / 0.45).toFixed(5)}); }`)
+float tyH(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
 {
   float part = floor( vPart + 0.5 );
@@ -326,18 +317,20 @@ float tyOld(float y) { return y <= 0.93 ? y : y >= 1.38 - ${TORSO.toFixed(4)} ? 
     // halves, 5 a fade
     // (on a sleeve the band goes by the distance down the arm from the shoulder, so with the arms
     // hanging it lines up with the chest's)
-    float ry = tyOld( vRest.y );
-    float bh = part < 2.5 ? ry : 1.43 - distance( vRest, vec3( sign( vRest.x ) * 0.205, ${(1.43 - TORSO).toFixed(4)}, -0.025 ) );
+    float ry = vRest.y;
+    vec3 shoulder = vec3( sign( vRest.x ) * 0.235, 1.225, -0.025 );
+    float bh = part < 2.5 ? ry : shoulder.y + 0.025 - distance( vRest, shoulder );
     if ( pat > 0.5 && pat < 1.5 && bh > uBand.x && bh < uBand.y ) col = uJacket2;
     else if ( pat > 3.5 && pat < 4.5 && part > 2.5 ) col = uJacket2;
     else if ( pat > 7.5 && pat < 8.5 && vRest.x < 0.0 ) col = uJacket2;
-    else if ( pat > 4.5 && pat < 5.5 ) col = mix( uJacket2, jk, smoothstep( 0.7, 1.45, ry ) );
+    else if ( pat > 4.5 && pat < 5.5 ) col = mix( uJacket2, jk, smoothstep( 0.62, 1.4, ry ) );
     else if ( pat > 1.5 && pat != 4.0 && pat != 5.0 && pat != 8.0 ) { float n = tyH( floor( vRest * 14.0 ) ); col = n > 0.66 ? uJacket2 : col; }
-    // a darker hem band and cuffs
-    if ( part < 2.5 && vRest.y < 0.86 ) col *= 0.8;
-    // the zip up the front, and a little white tab on the chest
-    if ( part < 2.5 && vRest.z > 0.0 && abs( vRest.x ) < 0.0045 && ry > 0.84 && ry < 1.56 ) col = vec3( 0.05, 0.06, 0.07 );
-    if ( part < 2.5 && vRest.z > 0.05 && vRest.x > 0.085 && vRest.x < 0.13 && ry > 1.3 && ry < 1.33 ) col = vec3( 0.92 );
+    // Cork7's details: the zip up the front to the top of the collar, two slanted pocket zips low
+    // on the front, a small white tab on the left chest, and black cuffs at the gloves
+    if ( part < 2.5 && vRest.z > 0.0 && abs( vRest.x ) < 0.0045 && ry > 0.7 && ry < 1.44 ) col = vec3( 0.05, 0.06, 0.07 );
+    if ( part < 2.5 && vRest.z > 0.05 && ry > 0.8 && ry < 0.93 && abs( abs( vRest.x ) - 0.15 - ( ry - 0.8 ) * 0.08 ) < 0.0035 ) col = vec3( 0.05, 0.06, 0.07 );
+    if ( part < 2.5 && vRest.z > 0.05 && vRest.x > 0.1 && vRest.x < 0.14 && ry > 1.2 && ry < 1.222 ) col = vec3( 0.92 );
+    if ( part > 3.5 && distance( vRest, vec3( sign( vRest.x ) * 0.642, 0.812, 0.083 ) ) < 0.05 ) col = uGloves;
   }
   else if ( part < 5.5 ) col = uGloves;
   else col = uPants;

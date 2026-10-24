@@ -38,7 +38,7 @@ export const ITEMS = [
   I('po-alu', 'poles', 'Alloy', 'free', 0, 0x9ea5b0),
   I('t-none', 'trail', 'Fresh Powder', 'free', 0, 0xffffff, 0xdfeaff, 0, { fx: 'snow' }),
   // riders (all lads; the face is the rider's own)
-  I('r-kai', 'rider', 'Kai', 'free', 0, 0xe8b796, null, 0, { body: 0 }), I('r-finn', 'rider', 'Finn', 'free', 0, 0x8d5a3b, null, 0, { body: 1 }),
+  I('r-kai', 'rider', 'Kai', 'free', 0, 0xc08a68, null, 0, { body: 0 }), I('r-finn', 'rider', 'Finn', 'free', 0, 0x8d5a3b, null, 0, { body: 1 }),
   I('r-leo', 'rider', 'Leo', 'free', 0, 0xf1c7a8, null, 0, { body: 2 }),
   // the shop's originals
   I('j-teal-band', 'jacket', 'Lift Op', 'epic', 800, 0x22b8c4, 0x1d1f26, 1), I('j-storm', 'jacket', 'Storm Shell', 'legendary', 1200, 0x2c3140, 0xff6a2b, 4),
