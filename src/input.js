@@ -21,9 +21,9 @@ export class Input {
     this.steer = 0;
     // 'arrows': the arrow keys ride (left/right carve and spin, up tuck / front flip, down
     // brake / backflip) and the number keys do the tricks; 'classic': WASD rides, arrows roll
-    try { this.scheme = localStorage.getItem('alpenglow.scheme') || 'arrows'; } catch { this.scheme = 'arrows'; }
+    try { this.scheme = localStorage.getItem('fallline.scheme') || 'arrows'; } catch { this.scheme = 'arrows'; }
     this.touch = { left: false, right: false, tuck: false, brake: false, jump: false, grab: false };
-    try { this.binds = JSON.parse(localStorage.getItem('alpenglow.binds') || '{}') || {}; } catch { this.binds = {}; }
+    try { this.binds = JSON.parse(localStorage.getItem('fallline.binds') || '{}') || {}; } catch { this.binds = {}; }
     this.remapKeys();
     addEventListener('keydown', (e) => {
       // typing in a text field (chat, name, room) isn't riding
@@ -84,7 +84,7 @@ export class Input {
 
   saveBinds() {
     this.remapKeys(); this.keys.clear();
-    try { localStorage.setItem('alpenglow.binds', JSON.stringify(this.binds)); } catch { /* */ }
+    try { localStorage.setItem('fallline.binds', JSON.stringify(this.binds)); } catch { /* */ }
   }
 
   bindOf(id) { return this.binds[id] ?? ACTIONS.find(([a]) => a === id)?.[2]; }
@@ -154,7 +154,7 @@ export class Input {
     return { steer, tuck, brake, jump, grab: !!grabKind, grabKind, flip, roll, up, down, butter };
   }
 
-  setScheme(s) { this.scheme = s; try { localStorage.setItem('alpenglow.scheme', s); } catch { /* */ } }
+  setScheme(s) { this.scheme = s; try { localStorage.setItem('fallline.scheme', s); } catch { /* */ } }
 
   endFrame() { this.pressed.clear(); }
 }

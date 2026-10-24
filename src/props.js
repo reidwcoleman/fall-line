@@ -906,7 +906,7 @@ export class Props {
     const panel = (color) => canvasTex(128, 96, (g, w, h) => {
       g.fillStyle = color; g.fillRect(0, 0, w, h);
       g.fillStyle = 'rgba(255,255,255,0.9)'; g.fillRect(0, h * 0.42, w, h * 0.16);
-      g.fillStyle = color; g.font = 'bold 15px Helvetica'; g.textAlign = 'center'; g.fillText('STOMPED', w / 2, h * 0.54);
+      g.fillStyle = color; g.font = 'bold 15px Helvetica'; g.textAlign = 'center'; g.fillText('FALL LINE', w / 2, h * 0.54);
     });
     const red = new THREE.MeshStandardMaterial({ map: panel('#d42a2a'), side: THREE.DoubleSide, roughness: 0.7 });
     const blue = new THREE.MeshStandardMaterial({ map: panel('#1f4fc9'), side: THREE.DoubleSide, roughness: 0.7 });
@@ -964,7 +964,7 @@ export class Props {
         const gr = c.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#ff6a3d'); gr.addColorStop(1, '#ffb347');
         c.fillStyle = gr; c.fillRect(0, 0, w, h);
         c.fillStyle = '#fff'; c.font = 'bold 64px Helvetica'; c.textAlign = 'center'; c.textBaseline = 'middle';
-        c.fillText('STOMPED  ·  START', w / 2, h / 2 + 3);
+        c.fillText('FALL LINE  ·  START', w / 2, h / 2 + 3);
       }), roughness: 0.6,
     }));
     banner.position.set(x, gy + 3.0, z + 0.55);
@@ -1013,7 +1013,7 @@ export class Props {
 
     // A-board fences + banners on both sides of the last 260 m, then the finish corral
     const boardTex = canvasTex(1024, 128, (c, w, h) => {
-      const brands = [['#1f4fc9', 'SUMMIT'], ['#e8432e', 'STOMPED'], ['#111', 'FRESH TRACKS'], ['#f2b705', 'POWDER CO.'], ['#18a868', 'GLACIER']];
+      const brands = [['#1f4fc9', 'SUMMIT'], ['#e8432e', 'FALL LINE'], ['#111', 'FRESH TRACKS'], ['#f2b705', 'POWDER CO.'], ['#18a868', 'GLACIER']];
       const bw = w / brands.length;
       brands.forEach(([col, t], i) => {
         c.fillStyle = col; c.fillRect(i * bw, 0, bw, h);

@@ -12,7 +12,7 @@ import fs from 'node:fs';
 const [out = '/tmp/ridecam', z = '900', plan = 'U3000,L700,R700,L700,R700'] = process.argv.slice(2);
 fs.mkdirSync(out, { recursive: true });
 for (const f of fs.readdirSync(out)) if (/^f\d+\.jpg$/.test(f)) fs.unlinkSync(`${out}/${f}`);
-const port = process.env.PORT ?? 5260;
+const port = process.env.PORT ?? 5270;
 const browser = await chromium.launch({ executablePath: CHROME, headless: true, args: [ANGLE, '--enable-gpu', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: Number(process.env.W ?? 960), height: Number(process.env.H ?? 720) }, deviceScaleFactor: 1 });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

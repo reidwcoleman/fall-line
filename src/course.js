@@ -16,7 +16,8 @@ const N3 = makeSimplex(42);
 // 0.21 on average, gentle enough that the camera looking down it still holds the horizon and
 // the mountains, and the kickers fly as Cork7's do. (Done to the sections themselves, once, so
 // everything built from them, here and in the workers, agrees.)
-if (!MAP.eased) { for (const s of MAP.sections) s.grad = +(s.grad * 0.75).toFixed(4); MAP.eased = true; }
+// (real gravity: the runs are pitched like real ones, a park 15-20 degrees, a black run 30+)
+if (!MAP.eased) { for (const s of MAP.sections) s.grad = +(s.grad * 1.35).toFixed(4); MAP.eased = true; }
 export const SECTIONS = MAP.sections;
 
 export const START_Z = MAP.start;
@@ -131,12 +132,14 @@ export const JUMPS = [...RUN_JUMPS, ...PARK_JUMPS].sort((a, b) => a.z - b.z);
   for (const J of JUMPS) {
     if (J.drop) continue;
     const grade = sectionAt(J.z).grad, hw = halfWidth(J.z);
+    // (real slopestyle proportions: a 2-6 m lip at 22-36 degrees, a table of 3h + 8, the landing
+    // running on for 7h + 20)
     const size = (h) => {
-      const lip = clamp(13 + 2.2 * h, 19, 37);
+      const lip = clamp(18 + 3 * h, 22, 36);
       const t = Math.tan((lip * Math.PI) / 180);
-      const w = Math.max(J.w, 11 + 1.2 * h);
+      const w = Math.max(J.w, 9 + 1.2 * h);
       const ramp = Math.max(J.ramp, (2 * h) / (t + Math.max(0.05, grade)));
-      return { h, lip, w, ramp, table: 2.3 * h + 12, land: 8.5 * h + 25 };
+      return { h, lip, w, ramp, table: 3 * h + 8, land: 7 * h + 20 };
     };
     const fits = (S) => {
       const lo = J.dx - S.w / 2 - 2 - 0.9 * S.h, hi = J.dx + S.w / 2 + 2 + 0.9 * S.h;
@@ -152,7 +155,7 @@ export const JUMPS = [...RUN_JUMPS, ...PARK_JUMPS].sort((a, b) => a.z - b.z);
       return S.ramp + S.table + S.land <= room;
     };
     let S = null;
-    for (let h = clamp(2 * J.h + 1.5, 3.2, 11); h >= J.h; h -= 0.25) { const T = size(h); if (fits(T)) { S = T; break; } }
+    for (let h = clamp(1.15 * J.h + 0.6, 2.2, 5.8); h >= Math.min(J.h, 2.2); h -= 0.25) { const T = size(h); if (fits(T)) { S = T; break; } }
     if (!S) continue;
     Object.assign(J, { h: S.h, w: S.w, ramp: S.ramp, table: S.table, land: S.land, lipAngle: S.lip, gap: true });
     // the knuckle: ~0.6 of the kicker's height below its lip, the landing hill built up to it out
@@ -419,9 +422,9 @@ function sweetSpeed(J, g = 9.81, kick = 0) {
 }
 // (quoted at the foot of the ramp, like the measured park tables: the climb costs speed)
 for (const J of JUMPS) if (!J.speed) J.speed = +Math.sqrt(sweetSpeed(J) ** 2 + 2 * 9.81 * J.h).toFixed(1);
-// the player rides Cork7's physics (the slope at 1.7 g, the air at 17.5, a 1.2 m/s kick off
-// every lip): his sweet spot, quoted at the foot of the ramp the same way
-for (const J of JUMPS) J.pspeed = +Math.sqrt(sweetSpeed(J, 17.5, 1.2) ** 2 + 2 * 9.81 * 1.7 * J.h).toFixed(1);
+// the player rides real physics (real gravity, no kick but his own pop): his sweet spot off the
+// lip at its own angle, quoted at the foot of the ramp the same way (the climb costs speed)
+for (const J of JUMPS) J.pspeed = +Math.sqrt(sweetSpeed(J, 9.81, 0.001) ** 2 + 2 * 9.81 * J.h).toFixed(1);
 
 // rail tops: a straight line on the ground plan, heights per shape (sampled every 0.25 m)
 for (const R of RAILS) {

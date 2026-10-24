@@ -1,8 +1,15 @@
-# Stomped
+# Fall Line
 
-A freeski park game in the browser, with accounts, global leaderboards and multiplayer servers, built around the feel of the indie game Cork7: corks, flips, grabs, rails and butters scored by rotation, with lines that build a multiplier until you land or bail. One 3.4 km run from the summit to the village (~1 km of vertical) lined with kickers and rail zones, a terrain park, a downhill race, and a mountain full of AI skiers, under photographed skies with scanned snow and rock and real people on the skis.
+A freeski game in the browser with real ski physics, built from Stomped's mountains, parks, gear, rider and loading screen. Speed comes from gravity against snow friction and air drag; tipped skis carve the arc of their sidecut and drift when asked for more than the snow holds; off a lip the rider is a free rigid body whose spin and flip are thrown at takeoff. No landing assist.
 
-**Play:** https://reidwcoleman.github.io/alpenglow/
+**Play:** https://reidwcoleman.github.io/fall-line/
+
+## The physics
+- **On the snow** (`src/realski.js`): gravity, glide friction mu*N (0.045 corduroy, 0.03 ice, up to 0.13 in deep snow until the skis plane), drag 0.5*rho*CdA*v^2 (CdA 0.55 standing, 0.24 tucked, rho 1.0), the load from the snow's curvature (rollers unweight, compressions press). Edge angle rolls in at ~3 rad/s and is limited by speed. A tipped ski carves R = Rsc*cos(edge) (16 m skis, 7.5 m board) while the edges hold; the hold is a friction limit that peaks near zero slip (2 g corduroy, 0.8 g ice) and falls to a sliding value past ~0.3 rad, so an over-asked turn breaks into a drift that scrubs speed, and the brake is a hockey stop on the edges. Catching the downhill edge while sliding sideways at speed takes you down.
+- **Kickers** (`src/course.js`): real slopestyle sizes (2-6 m lips at 22-36 degrees, tables of 3h+8 m); every one has the speed it is built for on its sign (J.pspeed, solved with real gravity). The runs are pitched 1.35x the map grades (a park about 15-20 degrees).
+- **In the air** (`src/freebody.js`): the rider is a rigid body with principal inertias (about 13 / 1.9 / 12 kg m^2 relaxed, 7 / 1.55 / 8 tucked); angular momentum is conserved, the shape changes the rate, Euler's equations do the rest, so corks and bios emerge from a twist thrown with a flip. The takeoff window (0.18 s) is when a throw goes in: `Skier.realThrow` picks the rotation (wound up by carving into the lip with the pop loaded, about half a turn per 0.22 s) and solves (Newton on a simulated flight) for the momentum that brings the heading round and the body square to the landing at touchdown. After that the player only changes shape (tuck or open) and nudges the attitude a little with no momentum.
+- **Landing** (`Skier.landReal`): crash if the body is tipped more than ~0.9 rad off the landing, the skis are more than ~55 degrees off the line of travel at speed, or the hit square to the snow is over ~13 m/s.
+- Tools: `node tools/realbench.mjs <park> [spin 0|1|2] [flip 0|1|-1]` rides a whole park like a person (speed-checking to each kicker) and prints every jump; `node tools/realdbg.mjs <park> <secs>` traces the ground state.
 
 ## The front page
 Built like the front page of a live-service indie game: tabs for **Ride**, **Events**, **Leaderboard**, **Locker**, **Shop**, **Pass**, **Replays**, **Trick School** and **Updates** over a painted background, with your rider as a sticker standing on a lift pass (type your name on it).
@@ -15,9 +22,9 @@ Built like the front page of a live-service indie game: tabs for **Ride**, **Eve
 - **Replays**: your last five runs are saved in the browser (IndexedDB); keep the ones you want for good.
 
 ## Accounts and the server
-The game runs on its own Firebase project (`alpenglow-ski-reid`, config in `src/cloud.js`):
+The game shares Stomped's Firebase project (`alpenglow-ski-reid`, config in `src/cloud.js`) under its own names (`cloud.NS = 'fl-'` on servers and boards, cloud saves in `fl_users`):
 - **Accounts**: everyone gets a guest account on first visit (Firebase anonymous auth). The account chip (top right) turns it into a real account with an email and password, keeping everything earned as a guest; signing in on another device brings the same rider. Rider names are unique (first come, first served).
-- **Cloud save** (Firestore `users/{uid}`): wallet, XP, items, kit, medals, lessons, quick tricks, trick book and best runs, written a moment after anything changes. The browser keeps a copy, so it plays offline too.
+- **Cloud save** (Firestore `fl_users/{uid}`): wallet, XP, items, kit, medals, lessons, quick tricks, trick book and best runs, written a moment after anything changes. The browser keeps a copy, so it plays offline too.
 - **Leaderboards** (`boards/{board}/scores/{uid}`, all time and `-w<week>`) with the run itself in `replays/{board}_{uid}`: 15 frames a second, positions as floats and the rest as 16-bit steps, gzipped (~100-200 KB).
 - **Servers** (Realtime Database `rooms/{server}` and `lobby`): two or three public servers per park plus private room codes. The menu shows who's on each. Anyone on a Yard server can **race everyone on it**: the start time goes through the server, all riders count down together and the results come in live.
 - Rules are in `firebase/` (`firebase deploy --only firestore:rules,database`). If Firebase can't be reached, multiplayer falls back to public MQTT relays and progress stays on the device.
@@ -173,7 +180,7 @@ A soundtrack made as it plays (drums, bass, pads and an arpeggio over four chord
 ## Dev
 ```
 npm install
-npm run dev            # http://127.0.0.1:5260
+npm run dev            # http://127.0.0.1:5270
 node tools/sim.mjs race   # headless race: finish times, missed gates, crashes
 node tools/parksim.mjs    # park riders on each line: airs, grinds, crashes
 node tools/parkjump.mjs   # table jumps: approach speed -> landing spot

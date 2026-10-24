@@ -9,7 +9,7 @@ const b = await chromium.launch({ executablePath: CHROME, headless: true, args: 
 for (const park of parks) {
   const page = await b.newPage({ viewport: { width: 320, height: 240 } });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-  await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5260}/?park=${park}&menu=0&mode=run&q=low`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5270}/?park=${park}&menu=0&mode=run&q=low`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 240000 });
   const L = await page.evaluate(() => JSON.stringify(window.__game.props.layout));
   fs.writeFileSync(`blender/data/props_${park}.json`, L);

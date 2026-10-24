@@ -5,7 +5,7 @@ const [out = '/tmp/ride', plan = 'ArrowUp:8000,shot'] = process.argv.slice(2);
 const b = await chromium.launch({ executablePath: CHROME, headless: true, args: [ANGLE, '--enable-gpu', '--ignore-gpu-blocklist'] });
 const page = await b.newPage({ viewport: { width: +(process.env.W ?? 1280), height: +(process.env.H ?? 720) } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5260}/?menu=0&mode=${process.env.MODE ?? 'run'}&tod=${process.env.TOD ?? 'bluebird'}&fixdpr=1${process.env.Q ?? ''}`);
+await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5270}/?menu=0&mode=${process.env.MODE ?? 'run'}&tod=${process.env.TOD ?? 'bluebird'}&fixdpr=1${process.env.Q ?? ''}`);
 await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
 await page.waitForTimeout(1500);
 let i = 0;

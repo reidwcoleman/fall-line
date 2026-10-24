@@ -1,11 +1,17 @@
 rules_version = '2';
-// Alpenglow: every rider writes only their own things; boards and replays are public to read.
+// Alpenglow / Stomped and Fall Line: every rider writes only their own things; boards and replays are public to read.
 service cloud.firestore {
   match /databases/{db}/documents {
     function me(uid) { return request.auth != null && request.auth.uid == uid; }
 
     // the cloud save of a rider's profile
     match /users/{uid} {
+      allow read, delete: if me(uid);
+      allow write: if me(uid) && request.resource.data.keys().size() < 40;
+    }
+
+    // Fall Line's cloud save (the same accounts, its own progress)
+    match /fl_users/{uid} {
       allow read, delete: if me(uid);
       allow write: if me(uid) && request.resource.data.keys().size() < 40;
     }

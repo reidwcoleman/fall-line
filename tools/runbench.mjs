@@ -5,7 +5,7 @@ const [park = 'yard', MODE = 'cruise', SPIN = '0', FLIP = '0'] = process.argv.sl
 const b = await chromium.launch({ executablePath: CHROME, headless: true, args: [ANGLE, '--enable-gpu', '--ignore-gpu-blocklist'] });
 const page = await b.newPage({ viewport: { width: 320, height: 180 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`http://127.0.0.1:5260/?menu=0&mode=run&park=${park}&q=low`);
+await page.goto(`http://127.0.0.1:5270/?menu=0&mode=run&park=${park}&q=low`);
 await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
 await page.waitForTimeout(1500);
 const out = await page.evaluate(async ([MODE, SPIN, FLIP]) => {

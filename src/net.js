@@ -326,8 +326,8 @@ export class Room {
 // a short random rider id that sticks for this browser
 export function myId() {
   try {
-    let id = localStorage.getItem('alpenglow.id');
-    if (!id) { id = Math.random().toString(36).slice(2, 10); localStorage.setItem('alpenglow.id', id); }
+    let id = localStorage.getItem('fallline.id');
+    if (!id) { id = Math.random().toString(36).slice(2, 10); localStorage.setItem('fallline.id', id); }
     return id;
   } catch { return Math.random().toString(36).slice(2, 10); }
 }

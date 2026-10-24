@@ -14,7 +14,7 @@ const done = new Set();
 for (const park of parks) {
 const page = await b.newPage({ viewport: { width: 320, height: 240 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5260}/?park=${park}&menu=0&mode=run`, { waitUntil: 'domcontentloaded' });
+await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5270}/?park=${park}&menu=0&mode=run`, { waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => window.__ready === true, null, { timeout: 240000 });
 const names = await page.evaluate(async (skip) => {
   const BAKE = window.__bake;

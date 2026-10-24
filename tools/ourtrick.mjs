@@ -6,7 +6,7 @@ const [jump = 'XL', TR = 'spingrab'] = process.argv.slice(2);
 const b = await chromium.launch({ executablePath: CHROME, headless: true, args: [ANGLE, '--enable-gpu', '--ignore-gpu-blocklist'] });
 const page = await b.newPage({ viewport: { width: 640, height: 360 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5260}/?menu=0&mode=park&fixdpr=1&tod=bluebird&lift=0`);
+await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5270}/?menu=0&mode=park&fixdpr=1&tod=bluebird&lift=0`);
 await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
 const out = await page.evaluate(async ([jump, TR]) => {
   const g = window.__game, p = g.player;

@@ -2,7 +2,7 @@
 // half-size textures from the start).
 const params = new URLSearchParams(location.search);
 let saved = null;
-try { saved = localStorage.getItem('alpenglow.quality'); } catch { /* private mode */ }
+try { saved = localStorage.getItem('fallline.quality'); } catch { /* private mode */ }
 const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 export let QUALITY_NAME = params.get('q') ?? saved ?? (coarse ? 'low' : 'high');
 if (!['low', 'high', 'ultra'].includes(QUALITY_NAME)) QUALITY_NAME = 'high';

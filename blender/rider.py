@@ -78,11 +78,11 @@ def creases(n, amp, ph):
 
 parts = []
 # the shell: a slim rider in a loose one. Narrow through the chest and shoulders, cut at the hips
-# (Cork7's: the long baggy pants show their full length), the collar zipped up high
+# (Cork7's: the long baggy pants show their full length), the collar open at the chin
 SHELL = [(0.8, 0.208, 0.172, 0.03, 2.3), (0.83, 0.206, 0.168, 0.026, 2.4), (0.88, 0.2, 0.16, 0.016, 2.5), (0.93, 0.194, 0.152, 0.006, 2.5),
          (1.0, 0.19, 0.147, 0.0, 2.5), (1.08, 0.189, 0.145, -0.005, 2.5), (1.16, 0.19, 0.146, -0.008, 2.4), (1.26, 0.193, 0.147, -0.012, 2.3),
-         (1.335, 0.192, 0.143, -0.016, 2.2), (1.395, 0.18, 0.135, -0.02, 2.1), (1.438, 0.155, 0.122, -0.022, 2.0), (1.472, 0.122, 0.106, -0.02, 2.0),
-         (1.505, 0.099, 0.096, -0.014, 2.0), (1.535, 0.092, 0.092, -0.01, 2.0), (1.56, 0.09, 0.09, -0.006, 2.0)]
+         (1.335, 0.192, 0.143, -0.016, 2.2), (1.395, 0.18, 0.135, -0.02, 2.1), (1.438, 0.155, 0.122, -0.022, 2.0), (1.472, 0.126, 0.11, -0.022, 2.0),
+         (1.5, 0.11, 0.102, -0.024, 2.0), (1.522, 0.106, 0.1, -0.026, 2.0)]
 rings = []
 for i, (y, a, b, z, p) in enumerate(SHELL):
     # (cut looser than the body: wider and a touch deeper below the chest)
@@ -120,9 +120,11 @@ for s in (1, -1):
         leg.append(dict(c=tuple(H.lerp(K, t) + out(max(0, t - 0.4) / 0.6)), t=tuple(K - H), side=X, a=a, b=b, w=w, part=6, fold=creases(4, 0.026 if t > 0.5 else 0.012, i * 1.3 + s)))
     # (deep front to back: the boot's cuff leans forward inside and mustn't come through the seat;
     # the hem stacks in rolls over the boot)
-    SH = [(0.1, 0.126, 0.132, {B('Thigh'): 0.25, B('Calf'): 0.75}), (0.3, 0.128, 0.135, {B('Calf'): 1}), (0.5, 0.13, 0.138, {B('Calf'): 1}),
-          (0.64, 0.132, 0.141, {B('Calf'): 1}), (0.74, 0.134, 0.144, {B('Calf'): 1}), (0.81, 0.136, 0.146, {B('Calf'): 1}), (0.87, 0.138, 0.148, {B('Calf'): 1}),
-          (0.93, 0.14, 0.15, {B('Calf'): 1}), (0.975, 0.141, 0.151, {B('Calf'): 1}), (1.0, 0.139, 0.149, {B('Calf'): 1})]
+    # (straight down to the boot like Cork7's, not flared: a touch narrower at the hem, which
+    # stacks over the boot's cuff)
+    SH = [(0.1, 0.126, 0.132, {B('Thigh'): 0.25, B('Calf'): 0.75}), (0.3, 0.127, 0.134, {B('Calf'): 1}), (0.5, 0.127, 0.134, {B('Calf'): 1}),
+          (0.64, 0.127, 0.134, {B('Calf'): 1}), (0.74, 0.127, 0.134, {B('Calf'): 1}), (0.81, 0.128, 0.135, {B('Calf'): 1}), (0.87, 0.128, 0.135, {B('Calf'): 1}),
+          (0.93, 0.127, 0.134, {B('Calf'): 1}), (0.975, 0.125, 0.132, {B('Calf'): 1}), (1.0, 0.122, 0.129, {B('Calf'): 1})]
     for i, (t, a, b, w) in enumerate(SH):
         leg.append(dict(c=tuple(K.lerp(A, t) + out(1) + V(0, 0, -0.012 * math.sin(t * math.pi))), t=tuple(A - K), side=X, a=a, b=b, w=w, part=7,
                         fold=creases(4, 0.026, i * 1.1 - s)))

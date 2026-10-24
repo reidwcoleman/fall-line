@@ -6,7 +6,7 @@ const b = await chromium.launch({ executablePath: CHROME, headless: true, args: 
 for (const gear of ['ski', 'board']) {
   const page = await b.newPage({ viewport: { width: 640, height: 360 } });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-  await page.goto(`http://127.0.0.1:5260/?menu=0&mode=run&tod=bluebird&gear=${gear}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`http://127.0.0.1:5270/?menu=0&mode=run&tod=bluebird&gear=${gear}`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
   await page.waitForTimeout(800);
   const set = (v) => page.evaluate((v) => { const g = window.__game, p = g.player, z = 2350; p.place(window.__cx(z), z, null, v); p.c7T = null; p.c7E = 0; p.c7Slash = 0; p.c7Skid = 0; }, v);

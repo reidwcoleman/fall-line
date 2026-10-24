@@ -25,7 +25,10 @@ export const SERVERS = {
   forest: ['Forest 1', 'Forest 2'],
   bigair: ['Big Air 1', 'Big Air 2'],
 };
-export const serverId = (park, name) => (park + '-' + name.toLowerCase().replace(/[^a-z0-9]/g, '')).slice(0, 40);
+// Fall Line shares Stomped's Firebase project: its servers, boards and cloud saves carry their
+// own names so the two games never mix (accounts and rider names are shared)
+export const NS = 'fl-';
+export const serverId = (park, name) => (NS + park + '-' + name.toLowerCase().replace(/[^a-z0-9]/g, '')).slice(0, 40);
 
 // the week a score counts for (ISO-ish: Monday starts it)
 export function weekKey(t = Date.now()) {
@@ -174,7 +177,7 @@ export class Cloud {
     if (!(await this.ready) || !this.uid) return null;
     const { F } = this;
     try {
-      const s = await F.getDoc(F.doc(this.fs, 'users', this.uid));
+      const s = await F.getDoc(F.doc(this.fs, 'fl_users', this.uid));
       return s.exists() ? s.data() : null;
     } catch (e) { console.warn('load profile', e); return null; }
   }
@@ -192,7 +195,7 @@ export class Cloud {
     this.pending = null;
     if (!data || !(await this.ready) || !this.uid) return;
     const { F } = this;
-    try { await F.setDoc(F.doc(this.fs, 'users', this.uid), { ...data, updated: F.serverTimestamp() }); } catch (e) { console.warn('save profile', e); }
+    try { await F.setDoc(F.doc(this.fs, 'fl_users', this.uid), { ...data, updated: F.serverTimestamp() }); } catch (e) { console.warn('save profile', e); }
   }
 
   // a rider name is first come, first served
@@ -219,6 +222,7 @@ export class Cloud {
   // entry: { name, score | time, gear, jacket, level, best, park, date }; lower time wins on race boards
   async submit(board, entry, replay) {
     if (!(await this.ready) || !this.uid) return null;
+    board = NS + board;
     const { F } = this;
     const race = entry.time != null && entry.score == null;
     const better = (a, b) => (race ? a.time < b.time : a.score > b.score);
@@ -246,6 +250,7 @@ export class Cloud {
 
   async top(board, { week = false, race = false, n = 50 } = {}) {
     if (!(await this.ready)) return null;
+    board = NS + board;
     const { F } = this;
     const b = week ? `${board}-w${weekKey()}` : board;
     const hit = this.cache.get(b);

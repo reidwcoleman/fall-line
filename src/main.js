@@ -1,4 +1,4 @@
-// Stomped: boot, game modes (The Run / Ski Park / Race the Cup), scoring, loop, HUD.
+// Fall Line: boot, game modes (The Run / Ski Park / Race the Cup), scoring, loop, HUD.
 import * as THREE from 'three';
 import { Environment, PRESETS, COND, WX_WEIGHT } from './sky.js';
 import { Terrain, CLOUDS } from './terrain.js';
@@ -55,8 +55,8 @@ THREE.Object3D.prototype.updateMatrixWorld = function (force) { if (this.visible
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
 const _v = new THREE.Vector3();
 const store = {
-  get(k, d) { try { const v = localStorage.getItem('alpenglow.' + k); return v == null ? d : v; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('alpenglow.' + k, v); } catch { /* private mode */ } },
+  get(k, d) { try { const v = localStorage.getItem('fallline.' + k); return v == null ? d : v; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('fallline.' + k, v); } catch { /* private mode */ } },
 };
 
 const NAMES = ['Ana Berg', 'Jonas Falk', 'Lena Moser', 'Marco Valli', 'Ingrid Dahl', 'Felix Gruber', 'Sofia Rinaldi', 'Kai Lindqvist', 'Elin Strand', 'Theo Baumann', 'Mila Novak', 'Nils Eriksen', 'Clara Huber', 'Luca Ferrari', 'Hanna Aas', 'Emil Steiner'];
@@ -1639,6 +1639,8 @@ class Game {
     if (!spec) { this.comboHud(); return; }
     const up = !!(st.fired && P.auto?.combo === st.fired && c.seq.startsWith(st.fired));
     if ((P.auto || P.trickType) && !up) this.status('ONE AT A TIME');
+    // (real physics: a spin or a flip is thrown off the lip, not in the middle of the air)
+    else if (P.real && (spec.spin || spec.flips) && P.airTime > 0.48) this.status('TOO LATE · THROW IT OFF THE LIP');
     else if (P.flightTime() < (P.strict ? 0.12 : 0.45)) this.status('TOO LATE · ' + name);
     else {
       // an upgrade carries on from where the first one started turning

@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Stomped</title>
+<title>Fall Line</title>
 <link rel="preload" as="image" href="art/menu.webp" fetchpriority="high">
-<meta name="description" content="Stomped: a freeski game in your browser. Corks, flips, grabs, rails and a 3.4 km run full of kickers, plus a terrain park and a downhill race." />
+<meta name="description" content="Fall Line: a freeski game in your browser with real ski physics. Carve on the sidecut, throw spins and corks off real kickers, and land them yourself." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%23ff8a3d%22/%3E%3Cpath d=%22M6 52 L24 22 L34 36 L42 26 L58 52Z%22 fill=%22%23fff%22/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -825,28 +825,28 @@
   (function () {
     var PARKS = { yard: ['The Yard', 'Open session'], slope: ['Trick Zone', 'Slopestyle · 3 km'], forest: ['Forest Line', 'Tree skiing'], bigair: ['Big Air', 'One huge kicker'], timber: ['Timberline', 'Tree run · 5.7 km'], grand: ['Grand Descent', 'Big mountain · 8.5 km'], mega: ['Mega Park', 'The big park · 4.3 km'], canyon: ['Shred Canyon', 'Flow run · 4.4 km'], cloud: ['Cloud Nine', 'Open freestyle · 3.2 km'] };
     var id = null;
-    try { id = new URLSearchParams(location.search).get('park') || localStorage.getItem('alpenglow.park'); } catch (e) {}
+    try { id = new URLSearchParams(location.search).get('park') || localStorage.getItem('fallline.park'); } catch (e) {}
     if (!PARKS[id]) id = 'yard';
     window.__park = [id, PARKS[id][0], PARKS[id][1]];
     var touch = matchMedia('(pointer: coarse)').matches;
     // ([x] becomes a key cap)
     var TIPS = touch ? [
-      'Tap [◀] [◀] in the air for a 360. [▼] [▼] is a grab.',
-      'Let go mid-spin: it winds down and settles on the nearest clean landing.',
-      'Hold [POP] to load up, let go at the lip to fly higher.',
+      'Spins come off the lip: hold [◀] or [▶] as you leave the snow. Nothing starts one in mid-air.',
+      'Carve into the lip with [POP] held to wind up a bigger spin.',
+      'Every kicker shows the speed it\'s built for. Too fast and you fly past the landing.',
+      '[▼] throws the skis across and brakes you. Scrub speed before a big jump.',
+      'Land with your skis along the way you\'re going, or you\'re going down.',
       'Ride straight up the snow ramps and you lock onto the rail.',
-      'Chain tricks without stopping to build your line multiplier.',
-      'Pick where you drop in: the top, the park, the rails or the big air.',
-      'Spend flakes in the Shop: jackets, boards, trails and more.'
+      'Pick where you drop in: the top, the park, the rails or the big air.'
     ] : [
-      'Tap [←] [←] in the air for a 360. [↓] [↓] [↓] is a backflip.',
-      'Let go mid-spin: it winds down and settles on the nearest clean landing.',
-      'Hold [Space] to load up, let go at the lip to fly higher.',
-      'Ride straight up the snow ramps and you lock onto the rail. [A] [D] swap sides.',
-      'Hold [↑] to tuck. The camera pulls back on big airs so you can watch the trick.',
-      'Pick where you drop in: the top, the park, the rails or the big air.',
-      'Press [G] to hop round and ride switch for bonus points.',
-      'Chain tricks without stopping to build your line multiplier.'
+      'Spins come off the lip: hold [←] or [→] as you leave the snow. Nothing starts one in mid-air.',
+      'Carve into the lip with [Space] held to wind up: every quarter second is another half turn.',
+      'Every kicker shows the speed it\'s built for. Too fast and you fly past the landing.',
+      '[↓] throws the skis across and brakes you. Scrub speed before a big jump.',
+      'In the air, hold the way you\'re turning to tuck up and spin faster, the other way to slow down.',
+      'Tip the skis further and they carve tighter. Ask for too much at speed and they drift.',
+      'Hold [↑] to tuck: half the drag, a lot more speed.',
+      'Land with your skis along the way you\'re going and your body square to the snow.'
     ];
     var KICK = [0.27, 0.58, 0.84];
     var shown = 0, target = 0, raf = 0, len = 0, path = null, carve = null, rider = null, lastPuff = 0, kicked = 0;
@@ -915,7 +915,7 @@
       document.getElementById('cardname').textContent = PARKS[id][0];
       document.getElementById('cardtag').textContent = PARKS[id][1];
       var T = document.getElementById('loadtitle');
-      T.innerHTML = 'STOMPED'.split('').map(function (ch, i) { return '<span style="animation-delay:' + (i * 0.05) + 's,' + (0.8 + i * 0.12) + 's">' + ch + '</span>'; }).join('');
+      T.innerHTML = 'FALL LINE'.split('').map(function (ch, i) { return '<span style="animation-delay:' + (i * 0.05) + 's,' + (0.8 + i * 0.12) + 's">' + (ch === ' ' ? '&nbsp;' : ch) + '</span>'; }).join('');
       path = document.getElementById('ld-path'); carve = document.getElementById('ld-carve'); rider = document.getElementById('ld-rider');
       len = path.getTotalLength();
       carve.style.strokeDasharray = len.toFixed(1); carve.style.strokeDashoffset = len.toFixed(1);
@@ -964,7 +964,7 @@
   </div>
   <canvas class="flakes"></canvas>
   <div class="top">
-    <div class="t" id="loadtitle">STOMPED</div>
+    <div class="t" id="loadtitle">FALL LINE</div>
     <div class="pk"><b>LOADING</b><span id="loadpark">The Yard</span><em id="loadtag">Open session</em></div>
   </div>
   <div class="card"><div class="ph"></div><div class="cn" id="cardname">The Yard</div><div class="ct" id="cardtag">Open session</div></div>
@@ -998,7 +998,7 @@
 <div id="menu" class="hidden">
   <div class="m-bg"></div>
   <header class="m-top">
-    <div class="logo">STOMPED</div>
+    <div class="logo">FALL LINE</div>
     <div class="m-icons">
       <button class="acct" id="ib-acct" title="Your account"><span class="av" id="ac-av">R</span><span class="tx"><b id="ac-name">Rider</b><small id="ac-sub">GUEST</small></span><i class="dot" id="ac-dot"></i></button>
       <span class="wallet" title="Flakes: earned on every run, spent in the Shop"><svg class="flake" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 1v14M1.9 4.5l12.2 7M1.9 11.5l12.2-7M6 2.6 8 4.4l2-1.8M6 13.4l2-1.8 2 1.8"/></svg><b id="flakes">0</b></span>
@@ -1100,7 +1100,7 @@
   </section>
 
   <section class="tab t-wide hidden" id="tab-updates">
-    <div class="eyebrow">STOMPED / PATCH NOTES</div>
+    <div class="eyebrow">FALL LINE / PATCH NOTES</div>
     <h1>WHAT'S NEW ON THE MOUNTAIN</h1>
     <div class="notes" id="notes"></div>
   </section>
@@ -1137,12 +1137,19 @@
 <div id="howto" class="panel hidden"><div class="card wide">
   <h2>HOW TO PLAY</h2>
   <div class="keys2">
-    <span><kbd>←</kbd><kbd>→</kbd></span><span>Carve · in the air: spin</span>
-    <span><kbd>↑</kbd></span><span>Tuck · in the air: front flip</span>
-    <span><kbd>↓</kbd></span><span>Brake · in the air: backflip</span>
-    <span>Combos</span><span>In the air, quick taps of the arrows throw a trick: <kbd>↓</kbd><kbd>↓</kbd> mute grab, <kbd>←</kbd><kbd>←</kbd> 360 (more taps, more spin), <kbd>↓</kbd><kbd>↓</kbd><kbd>↓</kbd> backflip, <kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> cork 720. Trick School has every combo, and a few big ones are secret until you find them. Hold an arrow instead and you spin or flip by hand</span>
+    <div class="h">Real physics</div>
+    <span>The snow</span><span>Gravity, snow friction and air drag set your speed: nothing holds you back or pushes you along. Steep pitches get fast, flats slow you down</span>
+    <span><kbd>←</kbd><kbd>→</kbd></span><span>Tip the skis onto their edges. A tipped ski bends and carves its own arc (tighter the further you tip it). Ask for more than the snow holds at speed and the skis drift sideways, scrubbing speed: that's how you control it</span>
+    <span><kbd>↑</kbd></span><span>Tuck (less drag, much faster) · slow on the flat it skates</span>
+    <span><kbd>↓</kbd></span><span>Hockey stop: the skis go across and their edges brake you. Check your speed before a kicker: each one shows the speed it's built for</span>
+    <div class="h">Jumps</div>
+    <span><kbd>SPACE</kbd></span><span>Hold to load your legs, let go to pop. Up a kicker, let go at the lip (up to a quarter second early still counts)</span>
+    <span>Throw it at the lip</span><span>In the air nothing can start a spin: it has to come off the lip. Hold <kbd>←</kbd>/<kbd>→</kbd> or <kbd>↑</kbd>/<kbd>↓</kbd> as you leave the snow (the first moment of the air) to throw a spin or a flip. Both together throw a cork or a bio</span>
+    <span>How much</span><span>Carve into the lip with <kbd>SPACE</kbd> loaded to wind up: every quarter second wound is another half turn (up to 1080). Thrown cold you get a 360, or a 180 on a small jump. Hold a flip key through the takeoff on a big jump for a double</span>
+    <span>In the air</span><span>Your momentum is set; you change your shape. Hold the way you're turning (or grab) to tuck up and turn faster, the other way to open up and slow down. Let go and you hold the shape you threw it in, which brings it round on the landing</span>
+    <span>Landing</span><span>Come down with your skis along the way you're going (forwards or switch) and your body square to the snow. Sideways or tipped over, you go down. Over- or undershoot the landing and the hit is harder</span>
+    <span>Combos</span><span>Quick taps of the arrows right off the lip throw a trick too: <kbd>←</kbd><kbd>←</kbd> 360, <kbd>↓</kbd><kbd>↓</kbd><kbd>↓</kbd> backflip, <kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> cork 720. Grab combos (<kbd>↓</kbd><kbd>↓</kbd> mute) work any time</span>
     <span><kbd>.</kbd> <kbd>G</kbd></span><span>Hop round to ride backwards (keypad . or G); again to turn forwards</span>
-    <span><kbd>SPACE</kbd></span><span>Hold to load, release to pop (no trick)</span>
     <span><kbd>SHIFT</kbd><kbd>Q</kbd><kbd>E</kbd><kbd>F</kbd><kbd>X</kbd><kbd>Z</kbd></span><span>Six grabs by hand. Switch keys mid-air to chain them, hold one a second to tweak it</span>
     <span><kbd>B</kbd></span><span>Butter (add ↓ for the tail) · ← → pivots a half turn, a spin you land into it with carries it to 360. A press lasts 1.5 s, then rest a second. Hold B in the air to land into a butter off a bump or a small hop (off a big jump you faceplant). 150, 300 for a 180, 600 for a 360; each butter pays less and only your first four in a run score</span>
     <span><kbd>↑</kbd> <kbd>↓</kbd> on a rail</span><span>Nose / tail press · ← → swap the slide (two swaps a bar) · <kbd>SPACE</kbd> mid-rail hops and lands back on it (turn in the hop for points), near the end it pops you off</span>
@@ -1150,11 +1157,6 @@
     <span><kbd>V</kbd></span><span>Replay the last trick</span>
     <span><kbd>TAB</kbd> <kbd>T</kbd></span><span>Multiplayer: riders in the room · chat</span>
     <span>Classic keys</span><span>Menu › Controls › Classic: WASD to ride, the arrows roll (sideflips, wildcats), ↑ shifty, ↓ daffy, ↑ + spin + flip for rodeos and mistys. A/D and W/S work in either</span>
-    <div class="h">Corks and co.</div>
-    <span>spin + <kbd>↓</kbd></span><span>Cork (lean back while spinning)</span>
-    <span>spin + <kbd>↑</kbd></span><span>Bio (board: misty)</span>
-    <span>Rodeos, flatspins</span><span>Combos: <kbd>↓</kbd><kbd>←</kbd><kbd>↓</kbd> rodeo, <kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd> flatspin, <kbd>←</kbd><kbd>→</kbd><kbd>←</kbd> sideflip</span>
-    <span>Landing</span><span>Let go near the snow: the rider finishes the closest clean rotation</span>
     <div class="h">Scoring</div>
     <span>720</span><span>four times a 360 · flips count as turns</span>
     <span>Grabs</span><span>held 0.25 s to count · held a second: ×1.25 on the spin, ×0.05 more for each other grab (three at most)</span>
@@ -1215,7 +1217,7 @@
     <div id="timer" class="disp">00:00</div>
   </div>
   <div id="course" class="shadow"><svg id="minimap" viewBox="0 0 44 128"></svg><div class="alt" id="alt"></div><div class="left" id="kmleft"></div></div>
-  <div id="np"><div class="tray"><button id="np-open" title="Music"><span class="art"><i></i></span><span class="tx"><b id="np-t">First Chair</b><small id="np-a">Stomped FM</small><span class="pr"><i id="np-p"></i></span></span></button><div class="ctl"><button id="np-prev" aria-label="Previous">&#9664;&#9664;</button><button id="np-play" aria-label="Pause"><span></span></button><button id="np-next" aria-label="Next">&#9654;&#9654;</button></div></div></div>
+  <div id="np"><div class="tray"><button id="np-open" title="Music"><span class="art"><i></i></span><span class="tx"><b id="np-t">First Chair</b><small id="np-a">Fall Line FM</small><span class="pr"><i id="np-p"></i></span></span></button><div class="ctl"><button id="np-prev" aria-label="Previous">&#9664;&#9664;</button><button id="np-play" aria-label="Pause"><span></span></button><button id="np-next" aria-label="Next">&#9654;&#9654;</button></div></div></div>
   <div id="botbar"><i></i></div>
   <div id="camlbl"></div>
   <div id="stats" class="hidden"></div>
@@ -1234,7 +1236,7 @@
 
 <div id="parks" class="hidden">
   <div id="pk-stage"><img id="pk-img" src="art/map.webp" alt="" loading="lazy" /><div id="pk-pins"></div></div>
-  <div class="pk-head"><div class="logo" style="font-size:40px">STOMPED</div><div class="t">CHOOSE YOUR PARK</div><button class="pk-back" id="pk-back">← Back</button></div>
+  <div class="pk-head"><div class="logo" style="font-size:40px">FALL LINE</div><div class="t">CHOOSE YOUR PARK</div><button class="pk-back" id="pk-back">← Back</button></div>
   <div class="pk-panel">
     <h3 id="pk-name">The Yard</h3><span class="tag" id="pk-tag">Open session</span>
     <p id="pk-blurb"></p>
@@ -1282,12 +1284,12 @@
     var P = window.__park, $ = function (i) { return document.getElementById(i); };
     if (P) { $('b-park-pick').style.backgroundImage = 'url(art/' + P[0] + '.webp)'; $('pc-name').textContent = P[1]; $('pc-sub').textContent = P[2]; }
     var mode = 'run';
-    try { mode = localStorage.getItem('alpenglow.mode') || 'run'; } catch (e) {}
+    try { mode = localStorage.getItem('fallline.mode') || 'run'; } catch (e) {}
     if (P && P[0] !== 'yard') mode = 'run';
     [].forEach.call(document.querySelectorAll('#modes button'), function (c) { c.classList.toggle('on', c.dataset.mode === mode); });
     $('ridelbl').textContent = { run: 'RIDE', park: 'RIDE THE PARK', race: 'RACE' }[mode] || 'RIDE';
     var who = 'solo';
-    try { who = localStorage.getItem('alpenglow.who') || 'solo'; } catch (e) {}
+    try { who = localStorage.getItem('fallline.who') || 'solo'; } catch (e) {}
     [].forEach.call(document.querySelectorAll('.who button'), function (c) { c.classList.toggle('on', c.dataset.who === who); });
     $('best').style.visibility = 'hidden';
     var hold = function (el) { if (window.__early) window.__early.classList.remove('queued'); window.__early = el; el.classList.add('queued'); };

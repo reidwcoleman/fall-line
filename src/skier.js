@@ -9,6 +9,8 @@
 import * as THREE from 'three';
 import { heightAt, normalAt, centerX, halfWidth, centerSlope, surfaceAt, RAILS, railAt, PIPE, pipeWalls, FINISH_Z, JUMPS } from './course.js';
 import { AirRot } from './airrot.js';
+import { FreeBody, INERTIA, INERTIA_BOARD } from './freebody.js';
+import { realGround, RS } from './realski.js';
 import { SkierModel, BOARD_NAME } from './skiermodel.js';
 import { clamp, smoothstep } from './noise.js';
 
@@ -16,7 +18,7 @@ const GRAV = 9.81;
 const UP = new THREE.Vector3(0, 1, 0);
 const BLOB = {}; const _bn = new THREE.Vector3(), _bq = new THREE.Quaternion();
 const _n = new THREE.Vector3(), _f = new THREE.Vector3(), _s = new THREE.Vector3(), _a = new THREE.Vector3();
-const _t = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _q3 = new THREE.Quaternion(), _m = new THREE.Matrix4();
+const _t = new THREE.Vector3(), _t2 = new THREE.Vector3(), _t3 = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _q3 = new THREE.Quaternion(), _m = new THREE.Matrix4();
 const near = [];
 const _r = { s: 0, lat: 0, y: 0, slope: 0 };
 
@@ -54,6 +56,14 @@ const C7 = {
 // shows real speed and air time). Below 1 everything goes the same way, only slower; Cork7's own
 // timing is 1 (slowed to 0.78 it read as floaty, not calm: the calm is in the camera and the body)
 export const PACE = 1;
+// the player's takeoff window: the first moments off the snow, while the legs are still pushing
+// off the lip, are when a spin or a flip can be thrown (in the free air there's nothing to push on)
+const REAL_TAKEOFF = 0.18;
+// the body shape a throw is sized for (between relaxed 0 and tucked 1), and its inertia
+const PLAN_SHAPE = 0.3;
+const INERTIA_PLAN = INERTIA.ride.clone().lerp(INERTIA.tuck, PLAN_SHAPE);
+const INERTIA_PLAN_B = INERTIA_BOARD.ride.clone().lerp(INERTIA_BOARD.tuck, PLAN_SHAPE);
+const SIM_BODY = [];
 // exponential approach (k per second)
 const ease = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 
@@ -138,8 +148,11 @@ export class Skier {
   // the player riding himself: no landing assist, no auto-finished spins
   get strict() { return this.isPlayer && !this.ai && this.world.arcade; }
   get pace() { return this.strict ? PACE : 1; }
-  // what the air pulls at: Cork7's for the player (not in the pipe, which keeps its own walls)
-  get airG() { return this.strict && !this.pipeAir ? C7.airG : GRAV; }
+  // the player rides real physics (realski.js on the snow, freebody.js in the air); the computer
+  // riders keep the simpler model their lines are tuned on
+  get real() { return this.isPlayer && !this.ai; }
+  // what the air pulls at (the old Cork7 air only for a strict rider that isn't real)
+  get airG() { return this.strict && !this.real && !this.pipeAir ? C7.airG : GRAV; }
   get canSwitch() { return this.isPlayer && !this.board && !this.ai; }
 
   place(x, z, heading = null, speed = 0) {
@@ -286,11 +299,22 @@ export class Skier {
 
     const inPipe = pipeAt(this.pos.x, this.pos.z);
     // the player rides Cork7's model (outside the pipe, whose walls need the full one)
-    const c7 = this.strict && inPipe === null;
-    this.c7 = c7;
+    const real = this.real && inPipe === null;
+    const c7 = !real && this.strict && inPipe === null;
+    this.c7 = c7; this.realOn = real;
     let vLong0;
     if (c7) vLong0 = this.groundC7(dt, c, n, powder, ice, W);
-    else {
+    else if (real) {
+      vLong0 = realGround(this, dt, c, n, powder, ice, W);
+      // winding up: carving into the lip with the pop loaded sets up the rotation to throw (half a
+      // turn more for every ~0.22 s of it)
+      if (c.jump && Math.abs(c.steer) > 0.5) {
+        if (Math.sign(c.steer) !== this.windDir) { this.windDir = Math.sign(c.steer); this.windT = 0; }
+        this.windT = (this.windT ?? 0) + dt;
+      } else if (!c.jump && this.jumpCharge <= 0 && !this.c7Buf) { this.windT = 0; this.windDir = 0; }
+      // (an edge caught at speed, sliding right across: over the skis)
+      if (this.caught) { this.caught = false; this.emit('edgeCatch', { speed }); this.startCrash('edge', speed); return; }
+    } else {
       // --- edging: skis roll onto edge progressively, release quicker ---
       const edgeT = clamp(c.steer, -1, 1) * EDGE_MAX * (1 - c.brake * 0.5);
       const rolling = Math.abs(edgeT) > Math.abs(this.edge) && Math.sign(edgeT) === Math.sign(this.edge || edgeT);
@@ -465,7 +489,19 @@ export class Skier {
     if (c.jump) this.jumpCharge = Math.min(1, this.jumpCharge + dt * (c7 ? 1.7 : 2.5));
     let pop = 0;
     let ramp = null;
-    if (c7) {
+    if (real) {
+      // a real pop: the legs extend off the snow, 1.5-3 m/s square to it. Up a kicker's ramp it's
+      // saved for the lip (let go up to a quarter second early still counts); let go further
+      // down the ramp and you hop off it there
+      const J = this.lipAhead(-0.5, 30);
+      ramp = J && J.lip - this.pos.z <= J.ramp + 0.5 ? J : null;
+      if (!c.jump && this.jumpCharge > 0) {
+        if (ramp) { this.c7Buf = this.jumpCharge; this.c7BufT = 0.25; } else pop = RS.pop0 + RS.pop1 * this.jumpCharge;
+        this.jumpCharge = 0;
+      }
+      if (this.c7BufT > 0 && (this.c7BufT -= dt) <= 0) { if (ramp) pop = (RS.pop0 + RS.pop1 * this.c7Buf) * 0.8; this.c7Buf = 0; }
+      this.perfectPop = false;
+    } else if (c7) {
       // Cork7's pop: 3.6-6.2 m/s off the snow. On a kicker's ramp the charge goes into the lip's
       // launch instead (held through it, or let go up to 0.3 s before it); let go earlier and
       // you hop off the ramp there and then
@@ -491,12 +527,14 @@ export class Skier {
 
     // integrate and follow the ground (leaving it over crests)
     const z0 = this.pos.z;
+    // (the way the skis were running along the snow, before any pop: the body stands square to it)
+    const tan0 = _t2.copy(v);
     this.pos.addScaledVector(v, dt);
     if (pop > 0) { v.addScaledVector(n, pop); this.pos.addScaledVector(n, 0.05); }
     // Cork7's kickers launch you off the lip along its angle, with a kick of 1.2 m/s and up
     // to 2.2 more from a charged pop
     let launched = false;
-    if (c7 && pop <= 0 && speed > 5) {
+    if ((c7 || real) && pop <= 0 && speed > 5) {
       for (const J of JUMPS) {
         if (J.drop || z0 >= J.lip || this.pos.z < J.lip || Math.abs(this.pos.x - centerX(J.lip) - J.dx) > J.w / 2 + 0.5) continue;
         const ch = Math.max(c.jump ? this.jumpCharge : 0, this.c7Buf || 0);
@@ -506,9 +544,19 @@ export class Skier {
         const jd = Math.atan2(centerX(J.lip + 1) - centerX(J.lip - 1), 2);
         const sl = J.lipAngle ? Math.tan((J.lipAngle * Math.PI) / 180) * Math.max(0.2, Math.cos(wrapAngle(T - jd)))
           : (heightAt(lx - dx * 0.05, lz - dz * 0.05) - heightAt(lx - dx * 0.65, lz - dz * 0.65)) / 0.6;
-        const i = Math.atan(sl), a = 1.2 + 2.2 * ch, sp = v.length();
-        const hor = sp * Math.cos(i), vert = sp * Math.sin(i) + a;
-        v.set(dx * hor, vert, dz * hor);
+        const i = Math.atan(sl), sp = v.length();
+        if (real) {
+          // off the lip at its own angle; a pop timed there pushes square to the ramp's face
+          const a = ch > 0.05 ? RS.pop0 + RS.pop1 * ch : 0;
+          const hor = sp * Math.cos(i) - a * Math.sin(i), vert = sp * Math.sin(i) + a * Math.cos(i);
+          tan0.set(dx * Math.cos(i), Math.sin(i), dz * Math.cos(i));
+          v.set(dx * hor, vert, dz * hor);
+          if (a > 0) { this.perfectPop = true; this.emit('pop', { perfect: true }); }
+        } else {
+          const a = 1.2 + 2.2 * ch;
+          const hor = sp * Math.cos(i), vert = sp * Math.sin(i) + a;
+          v.set(dx * hor, vert, dz * hor);
+        }
         this.pos.y = Math.max(this.pos.y, heightAt(this.pos.x, this.pos.z) + 0.05);
         this.jumpCharge = 0; this.c7Buf = 0; this.c7BufT = 0;
         launched = ch > 0.05 ? 'pop' : 'kick';
@@ -552,9 +600,13 @@ export class Skier {
         }
         this.pipeAir = true;
       }
-      // (the player's own rotation is Cork7's: one orientation turned from the takeoff's frame)
-      this.air7Live = this.strict && !this.pipeAir;
-      if (this.air7Live) (this.air7 ??= new AirRot()).reset(0, this.heading);
+      // (the player's body in the air is a real rigid body: freebody.js)
+      this.airReal = real && !this.pipeAir;
+      if (this.airReal) this.realTakeoff(tan0);
+      else {
+        this.air7Live = this.strict && !this.pipeAir;
+        if (this.air7Live) (this.air7 ??= new AirRot()).reset(0, this.heading);
+      }
       if (this.trackSlot) this.trackSlot.break();
       this.emit('takeoff', { pop: pop > 0 });
     } else {
@@ -688,6 +740,7 @@ export class Skier {
   }
 
   stepAir(dt, c) {
+    if (this.airReal) return this.stepAirReal(dt, c);
     const v = this.vel;
     this.c7On = false;
     this.airTime += dt;
@@ -869,6 +922,7 @@ export class Skier {
   }
 
   land(gy) {
+    if (this.airReal) return this.landReal(gy);
     this.auto = null;
     const v = this.vel;
     const arc = this.world.arcade;
@@ -979,6 +1033,297 @@ export class Skier {
       this.butter = { t: 0, tail: this.controls.brake > 0, turn: 0, dir: 0, carry: Math.abs(sv) > 1.5 ? Math.sign(sv) : 0, landed: true };
       this.butterHeld = true;
     }
+  }
+
+  // ---- real air (the player) ----
+  // Off the snow the body leaves square to the snow it ran along (tan: that way), with the forward
+  // turn a rider gives himself at a lip (weight over the front of the boots as the ramp falls
+  // away): from square to the takeoff to square to the landing, over the flight. Anything more,
+  // a spin or a flip, has to be thrown in the takeoff window (stepAirReal).
+  realTakeoff(tan) {
+    const F = (this.fb ??= new FreeBody(this.board));
+    this.air7 = F; // (snapshots read the orientation from here)
+    const fwd = _t3.copy(tan);
+    if (fwd.lengthSq() < 1e-6) fwd.set(Math.sin(this.heading), 0, Math.cos(this.heading));
+    fwd.normalize();
+    // (riding switch the skis point back up the line)
+    const sw = Math.sin(this.heading) * fwd.x + Math.cos(this.heading) * fwd.z < 0;
+    const up = _n.set(0, 1, 0).addScaledVector(fwd, -fwd.y).normalize();
+    const sf = _a.copy(fwd).multiplyScalar(sw ? -1 : 1);
+    const lat = _s.crossVectors(up, sf).normalize();
+    _m.makeBasis(lat, up, sf);
+    _q.setFromRotationMatrix(_m);
+    // the landing: where the flight comes down and how steep it is there, along the way he's going
+    const LP = (this.landP ??= new THREE.Vector3());
+    const T = this.realFlight(LP);
+    const v = this.vel, hx = v.x, hz = v.z, hl = Math.hypot(hx, hz) || 1;
+    const lx = LP.x, lz = LP.z;
+    const dx = (hx / hl) * 0.6, dz = (hz / hl) * 0.6;
+    const fall = Math.atan2(heightAt(lx - dx, lz - dz) - heightAt(lx + dx, lz + dz), 1.2);
+    const rate = T > 0.35 ? (Math.asin(clamp(fwd.y, -1, 1)) + fall) / T : 0;
+    (this.natAx ??= new THREE.Vector3()).crossVectors(up, fwd).normalize();
+    this.natW = clamp(rate, -1.2, 1.6);
+    _t3.copy(this.natAx).multiplyScalar(this.natW);
+    F.reset(_q, _t3);
+    this.heading = F.bodyHeading;
+    this.spinVel = 0; this.flipVel = 0; this.rolled = 0;
+    this.trickType = null; this.flipDir = 0;
+    this.flightT = T; this.natTurn = this.natW * T;
+    this.throwW = 0; this.throwF = 0; this.throwR = 0; this.spinPlan = 0; this.flipPlan = 0; this.spinSign = 0;
+    normalAt(lx, lz, (this.landN ??= new THREE.Vector3()));
+  }
+
+  // The throw: what a rider puts into a takeoff he knows. He picks the rotation (the spin wound
+  // up on the way in, or 360 / 180 thrown cold; one flip, two if it's held on a big jump) and
+  // throws it with the momentum that brings it round on touchdown, the way a rider who knows the
+  // jump does by feel. We find that momentum the way his body would have to: fly the free body
+  // forward (freebody.js, the shape he usually holds) and correct the throw until the skis come
+  // round to the half turn and the body comes down square to the landing. After that it's all
+  // him: holding the shape, tucking tighter or opening out.
+  realThrow(s, fIn, rIn, dbl = false, force = false) {
+    const F = this.fb, left = Math.max(0.3, this.flightT - this.airTime);
+    let changed = force;
+    if (s && !this.spinPlan) {
+      const steps = this.windT > 0.05 && this.windDir === s ? clamp(1 + Math.floor(this.windT / 0.22), 1, 6) : this.flightT > 1.05 ? 2 : 1;
+      // (no more than a body can turn: ~9.5 rad/s)
+      let n = steps;
+      while (n > 1 && (n * Math.PI) / left > 9.5) n--;
+      this.spinPlan = n * 180; this.spinSign = -s; changed = true;
+    }
+    if (fIn && (!this.flipPlan || dbl)) {
+      let n = dbl ? 2 : 1;
+      while (n > 1 && (n * 2 * Math.PI) / left > 6.5) n--;
+      this.flipPlan = n * Math.sign(fIn); changed = true;
+    }
+    if (rIn && !this.rolled) { this.rolled = 1; this.rollDir = Math.sign(rIn); this.throwR = Math.sign(rIn) * Math.min(6, (2 * Math.PI) / left); changed = true; }
+    if (!changed) return;
+    // the axes he throws about, as they are now
+    const up = (this.thUp ??= new THREE.Vector3()).set(0, 1, 0).applyQuaternion(F.q);
+    const fw = (this.thFw ??= new THREE.Vector3()).set(0, 0, 1).applyQuaternion(F.q);
+    const yaw0 = F.yawTurn;
+    const ySign = this.spinSign ?? 1;
+    const wantYaw = this.spinPlan ? yaw0 + ySign * (this.spinPlan / 180) * Math.PI : null;
+    const flips = this.flipPlan;
+    // a first guess: steady rates over what's left of the flight
+    let wT = this.spinPlan ? ySign * ((this.spinPlan / 180) * Math.PI) / left : 0;
+    let fT = flips ? (flips * 2 * Math.PI) / left : 0;
+    const sim = (w, f, out) => {
+      const S = (SIM_BODY[this.board ? 1 : 0] ??= new FreeBody(this.board));
+      S.q.copy(F.q); S.I.copy(this.board ? INERTIA_PLAN_B : INERTIA_PLAN); S.shape = PLAN_SHAPE;
+      _a.copy(this.natAx).multiplyScalar(this.natW + f).addScaledVector(up, w).addScaledVector(fw, this.throwR);
+      S.L.copy(S.worldInertia(_a, _t3));
+      S.yawTurn = yaw0; S.som = 0; S.inversions = 0; S.heading = S.bodyHeading; S._inv = S.upright < -0.3;
+      const h = 1 / 30;
+      for (let t = 0; t < left - 1e-6; t += h) S.update(Math.min(h, left - t));
+      // (the misses: the heading against the half turn wanted, the body against the landing's normal)
+      const u = _t3.set(0, 1, 0).applyQuaternion(S.q);
+      const ax = _n.crossVectors(u, this.landN);
+      out[0] = wantYaw == null ? 0 : S.yawTurn - wantYaw;
+      out[1] = Math.atan2(ax.dot(this.natAx), u.dot(this.landN));
+      return out;
+    };
+    const r = [0, 0], ra = [0, 0], rb = [0, 0], e = 0.04;
+    // (a spin alone still has its pitch planned with it: the body tipping forward over the flight
+    // carries the spin off its axis, so the two are thrown together)
+    const solveW = wantYaw != null, solveF = true;
+    for (let it = 0; it < 7 && (solveW || solveF); it++) {
+      sim(wT, fT, r);
+      if (Math.abs(r[0]) < 0.03 && Math.abs(r[1]) < 0.03) break;
+      if (solveW && solveF) {
+        sim(wT + e, fT, ra); sim(wT, fT + e, rb);
+        const a = (ra[0] - r[0]) / e, b = (rb[0] - r[0]) / e, c = (ra[1] - r[1]) / e, d = (rb[1] - r[1]) / e;
+        const det = a * d - b * c;
+        if (Math.abs(det) < 1e-6) break;
+        wT -= clamp((d * r[0] - b * r[1]) / det, -3, 3); fT -= clamp((-c * r[0] + a * r[1]) / det, -3, 3);
+      } else if (solveW) {
+        sim(wT + e, fT, ra);
+        const a = (ra[0] - r[0]) / e;
+        if (Math.abs(a) < 1e-6) break;
+        wT -= clamp(r[0] / a, -3, 3);
+      } else {
+        sim(wT, fT + e, rb);
+        const d = (rb[1] - r[1]) / e;
+        if (Math.abs(d) < 1e-6) break;
+        fT -= clamp(r[1] / d, -3, 3);
+      }
+    }
+    // thrown: the body carries that momentum (sized for the shape he'll hold it in)
+    _a.copy(this.natAx).multiplyScalar(this.natW + fT).addScaledVector(up, wT).addScaledVector(fw, this.throwR);
+    const I0 = _t2.copy(F.I);
+    F.I.copy(this.board ? INERTIA_PLAN_B : INERTIA_PLAN);
+    F.L.copy(F.worldInertia(_a, _t3));
+    F.I.copy(I0);
+    this.throwW = wT; this.throwF = fT;
+  }
+
+  stepAirReal(dt, c) {
+    const v = this.vel, F = this.fb;
+    this.c7On = false;
+    this.airTime += dt;
+    this.gload = 0;
+    this.edge *= 1 - Math.min(1, dt * 3);
+    v.y -= GRAV * dt;
+    // the air's drag (smaller grabbing), and the wind
+    const sp = v.length();
+    const k = (0.5 * RS.rho * ((this.board ? 0.62 : 0.55) - (c.grab ? 0.12 : 0))) / RS.mass;
+    v.addScaledVector(v, -k * sp * dt);
+    const W = this.world.wind;
+    if (W && W.s > 0) { v.x += W.x * W.s * k * 7 * dt; v.z += W.z * W.s * k * 7 * dt; }
+    // a pop a touch late off a lip, the boots still on it
+    if (this.airTime < 0.1 && this.offKicker && !this.popped && !c.jump && this.jumpCharge > 0) {
+      v.y += 1.1 * this.jumpCharge; this.popped = true; this.perfectPop = true;
+      this.emit('pop', { perfect: true, late: true });
+      this.realReplan();
+    }
+    if (this.airTime > 0.1) this.jumpCharge = 0;
+    // a combo (main.js): its spin and flip go in as the throw while he's still near the lip; its
+    // grab is held through the middle of the flight
+    const A = this.auto;
+    if (A && !A.real) {
+      A.real = true;
+      if ((A.spin || A.flips) && this.airTime <= REAL_TAKEOFF + 0.3 && !this.spinPlan && !this.flipPlan) {
+        if (A.spin) { this.spinPlan = A.spin; this.spinSign = A.dir ?? 1; }
+        const T = A.type && TRICKS[A.type];
+        if (A.flips && T?.roll) { this.rolled = 1; this.rollDir = A.roll ?? 1; this.throwR = this.rollDir * Math.min(6, (2 * Math.PI) / Math.max(0.3, this.flightT - this.airTime)); }
+        else if (A.flips) this.flipPlan = A.flips * (T?.back ? -1 : 1);
+        this.realThrow(0, 0, 0, false, true);
+      }
+    }
+    if (A?.grab) { c.grab = this.airTime > 0.1 && this.flightT - this.airTime > 0.22; c.grabKind = A.grab; }
+    const s = Math.abs(c.steer) > 0.15 ? Math.sign(c.steer) : 0;
+    const fIn = c.flip || 0, rIn = c.roll || 0;
+    const up = _n.set(0, 1, 0).applyQuaternion(F.q), lat = _s.set(1, 0, 0).applyQuaternion(F.q), fw = _f.set(0, 0, 1).applyQuaternion(F.q);
+    if (this.airTime <= REAL_TAKEOFF) {
+      // still pushing off the lip: the arms, the hips and the edges throw the spin and the flip
+      this.realThrow(s, fIn, rIn);
+      // (a flip still held as the window closes, on a big enough jump, goes for the double)
+      if (fIn && this.airTime + dt > REAL_TAKEOFF && Math.abs(this.flipPlan) === 1 && this.flightT > 2.2) this.realThrow(0, fIn, 0, true);
+    }
+    // the shape he holds: a grab or the way he's already turning pulls him in (quicker), the
+    // other way opens him out (slower)
+    const bo = F.bodyOmega(_t3);
+    // (the throw is sized for a relaxed body a touch tucked, the way the key held keeps it)
+    let shape = c.grab ? 1 : 0;
+    if (this.airTime > REAL_TAKEOFF) {
+      if (s && Math.abs(bo.y) > 0.8) shape = Math.sign(-s) === Math.sign(bo.y) ? Math.max(shape, PLAN_SHAPE) : -1;
+      if (fIn && Math.abs(bo.x) > 0.8) shape = Math.sign(fIn) === Math.sign(bo.x) ? Math.max(shape, PLAN_SHAPE) : -1;
+      // (let go of everything he holds the shape he threw it in)
+      if (!s && !fIn && !c.grab && (this.spinPlan || this.flipPlan || this.rolled)) shape = PLAN_SHAPE;
+    }
+    F.setShape(shape, dt);
+    F.update(dt);
+    // (and the arms and hips nudge the orientation a little, with no momentum: spotting the landing)
+    if (this.airTime > REAL_TAKEOFF && (s || fIn)) F.wriggle(_a.set(fIn * 0.45, -s * 0.55, 0), dt);
+    // spotting the landing: with no flip on, the hips and arms ease the body square to where it's
+    // coming down (a few tenths of a radian a second at most, no momentum)
+    else if (this.airTime > REAL_TAKEOFF && !this.spinPlan && !this.flipPlan && !this.rolled) {
+      if (!this.spotN || !(--this.spotProbe > 0)) {
+        this.spotProbe = 6;
+        this.realFlight(_t2);
+        normalAt(_t2.x, _t2.z, (this.spotN ??= new THREE.Vector3()));
+      }
+      const u = _t3.set(0, 1, 0).applyQuaternion(F.q);
+      const ax = _a.crossVectors(u, this.spotN);
+      const ang = Math.asin(clamp(ax.length(), 0, 1));
+      if (ang > 0.01) {
+        ax.normalize().applyQuaternion(_q3.copy(F.q).invert());
+        F.wriggle(ax.multiplyScalar(Math.min(0.35, ang * 1.5)), dt);
+      }
+    }
+    this.heading = F.bodyHeading;
+    this.spin = F.yawTurn; this.pitch = F.som; this.flipAcc = F.som;
+    this.spinVel = F.omega.y; this.flipVel = F.bodyOmega(_t3).x;
+    // what it is so far: going over makes it a flip, the twist round it says which
+    if (F.inversions > 0 || F.upright < 0) {
+      const tw = Math.abs(F.yawTurn), back = F.som < 0;
+      this.trickType = this.rolled ? (tw > 2.2 ? 'flatspin' : 'sideflip')
+        : tw > Math.PI * 1.3 ? (back ? 'cork' : 'bio') : tw > Math.PI * 0.6 ? (back ? 'rodeo' : 'misty') : back ? 'backflip' : 'frontflip';
+      this.flipDir = this.rolled ? this.rollDir || 1 : back ? -1 : 1;
+    }
+    if (c.grab) {
+      this.grabTime += dt;
+      const kk = this.board ? BOARD_NAME[c.grabKind || 'mute'] ?? 'indy' : c.grabKind || 'mute';
+      this.grabs[kk] = (this.grabs[kk] || 0) + dt;
+    }
+    if (!this.trickType && Math.abs(this.spinVel) < 2.5 && !c.grab) {
+      if (c.up) this.shiftyT += dt;
+      if (c.down) this.daffyT += dt;
+    }
+    this.pos.addScaledVector(v, dt);
+    this.maxY = Math.max(this.maxY, this.pos.y);
+    const gy = heightAt(this.pos.x, this.pos.z);
+    this.maxAirY = Math.max(this.maxAirY, this.pos.y - gy);
+    this.lean *= 1 - Math.min(1, dt * 4);
+    if (this.pos.y <= gy) this.land(gy);
+  }
+
+  // Touchdown, judged the way the snow judges it: the legs take up to ~12 m/s square to the
+  // landing if they're under him (far less tipped over); skis crossways to the way he's going
+  // catch and throw him; still turning hard end over end he can't stop it. Whatever he gets
+  // away with the skis carry on from where they came down: a crooked landing skids itself
+  // straight on the snow (realski.js), costing what a skid costs.
+  landReal(gy) {
+    this.auto = null;
+    const v = this.vel, F = this.fb;
+    this.pos.y = gy;
+    const n = normalAt(this.pos.x, this.pos.z, this.normal);
+    const vn = -v.dot(n);
+    const up = _t3.set(0, 1, 0).applyQuaternion(F.q);
+    const tiltN = Math.acos(clamp(up.dot(n), -1, 1));
+    const hor = Math.atan2(v.x, v.z);
+    const bh = F.bodyHeading;
+    const mis = Math.abs(wrapAngle(bh - hor));
+    const off = Math.min(mis, Math.PI - mis);
+    const sp = v.length();
+    const bo = F.bodyOmega(_a);
+    const big = this.airTime > 0.3;
+    // (a spin still turning as the skis touch is stopped by them; a flip still going over isn't)
+    const crash = tiltN > 0.9 || (off > 0.95 && sp > 6) || vn > 13 || (tiltN > 0.55 && vn > 7.5) || (Math.abs(bo.x) > 3.5 && tiltN > 0.4);
+    const sketchy = !crash && big && (tiltN > 0.4 || off > 0.32 || vn > 8.5 || Math.abs(bo.y) > 7);
+    this.landDbg = { tilt: +tiltN.toFixed(2), off: +off.toFixed(2), vn: +vn.toFixed(1), som: +bo.x.toFixed(2), tw: +bo.y.toFixed(2), sp: +sp.toFixed(1) };
+    const switchOut = mis >= Math.PI / 2;
+    const back = switchOut && this.canSwitch;
+    if (!crash) {
+      this.heading = bh + (switchOut && !back ? Math.PI : 0); this.avgHeading = this.heading; this.skidYaw = 0;
+      this.landSkid = Math.min(4, Math.sin(off) * sp * 0.3);
+      this.switchStance = switchOut; this.switchT = 0;
+      if (this.board && switchOut) this.boardSwitch = !this.boardSwitch;
+      // (whatever tilt fore and aft is left eases out on the snow)
+      this.flipAxis.set(1, 0, 0);
+      this.landTilt = clamp(Math.asin(clamp(up.dot(this.forward(_f)), -1, 1)), -0.7, 0.7);
+    }
+    // the legs soak up the hit square to the snow; the slap packs the snow and costs a little more
+    v.addScaledVector(n, Math.max(0, vn));
+    const t = v.length();
+    if (t > 0.01) v.multiplyScalar(Math.max(0, t - 0.12 * Math.max(0, vn)) / t);
+    this.onGround = true; this.airReal = false; this.air7Live = false;
+    this.compress = clamp(vn / 9, 0.2, 1);
+    this.gload = 1 + vn / 5;
+    const grabs = Object.entries(this.grabs).filter(([, g]) => g >= 0.25).sort((a, b) => b[1] - a[1]);
+    const trick = {
+      air: this.airTime, height: this.maxAirY, vn,
+      spin: Math.round(Math.abs(this.spin) / Math.PI) * 180, spinDir: Math.sign(this.spin), spin90: Math.round(Math.abs(this.spin) / (Math.PI / 2)) * 90,
+      flips: this.trickType ? Math.max(1, F.inversions) : 0, flipDir: this.flipDir, type: this.trickType,
+      grab: this.grabTime > 0.25, grabTime: this.grabTime, grabs, clean: !crash, sketchy, popped: !!this.popped,
+      stomp: !crash && !sketchy && vn < 5 && this.airTime > 0.7, perfectPop: !!this.perfectPop,
+      side: Math.abs(Math.sin(off)), boost: 0,
+      rise: this.maxY - this.takeoffY, pipe: false, switchIn: this.takeoffSwitch, switchOut, fromRail: !!this.fromRail,
+      board: this.board, shifty: this.shiftyT >= 0.22, daffy: this.daffyT >= 0.22,
+      hop: !this.offKicker && !this.fromRail, vz: v.z,
+    };
+    if (sketchy) { this.flailT = 0.7; this.wobT = 0; this.wobS = Math.sign(wrapAngle(bh - hor) || Math.random() - 0.5); }
+    this.landSpin = this.spinVel;
+    this.pipeAir = false; this.perfectPop = false; this.spinVel = 0; this.flipVel = 0; this.assist = null;
+    this.springV -= Math.min(vn, 14) * 0.16;
+    if (!crash && big) { this.landT = 0; this.landA = clamp(0.3 + vn / 11, 0.3, 1) * (sketchy ? 1.15 : 1); }
+    if (!crash) { this.pitch = 0; this.spin = 0; this.flipAcc = 0; this.trickType = null; }
+    if (this.trackSlot) {
+      this.trackSlot.break();
+      if (this.airTime > 0.25 && vn > 1.5) this.trackSlot.dent(this.pos, v, n, this.board ? 0.4 : 0.36, 0.9 + Math.min(vn, 14) * 0.06, 0.4 + Math.min(vn, 12) / 14);
+    }
+    const hit = vn + (tiltN > 1.6 ? sp * 0.3 : 0);
+    this.windT = 0; this.windDir = 0;
+    if (crash) this.startCrash('landing', hit); else this.emit('land', trick);
   }
 
   // The last moments before touchdown: whatever rotation is closest to a clean landing gets
@@ -1121,6 +1466,35 @@ export class Skier {
       this.pitch += dP; this.flipAcc += dP; this.flipVel = 0;
     }
   }
+
+  // the flight changed under him (a late pop): where it comes down now, the forward turn that
+  // brings him square to it, and whatever he threw re-sized to fit
+  realReplan() {
+    const F = this.fb;
+    const left = Math.max(0.05, this.realFlight(this.landP));
+    this.flightT = this.airTime + left;
+    normalAt(this.landP.x, this.landP.z, this.landN);
+    const u = _t3.set(0, 1, 0).applyQuaternion(F.q), ax = _n.crossVectors(u, this.landN);
+    this.natW = clamp(Math.atan2(ax.dot(this.natAx), u.dot(this.landN)) / left, -1.2, 1.6);
+    if (this.spinPlan || this.flipPlan) this.realThrow(0, 0, 0, false, true);
+    else F.L.copy(F.worldInertia(_a.copy(this.natAx).multiplyScalar(this.natW), _t3));
+  }
+
+  // the real flight from here: gravity and the air's drag, stepped until it meets the snow.
+  // Returns the time left; out gets where it comes down
+  realFlight(out = null) {
+    const k = (0.5 * RS.rho * (this.board ? 0.62 : 0.55)) / RS.mass, h = 1 / 60;
+    let x = this.pos.x, y = this.pos.y, z = this.pos.z, vx = this.vel.x, vy = this.vel.y, vz = this.vel.z, t = 0;
+    for (; t < 7; t += h) {
+      const sp = Math.hypot(vx, vy, vz);
+      vx -= k * sp * vx * h; vy -= (GRAV + k * sp * vy) * h; vz -= k * sp * vz * h;
+      x += vx * h; y += vy * h; z += vz * h;
+      if (t > 0.02 && y <= heightAt(x, z)) break;
+    }
+    if (out) out.set(x, y, z);
+    return t;
+  }
+  flightTimeLeft() { return this.realFlight(); }
 
   // time to touchdown along the ballistic path from here
   flightTime() {
@@ -1338,7 +1712,7 @@ export class Skier {
   // ---- crashes: tumble and slide, lie there a moment, get up where you stopped ----
   // hit: how hard it was (m/s into the thing, or into the snow)
   startCrash(reason, hit = 0) {
-    this.air7Live = false;
+    this.air7Live = false; this.airReal = false;
     if (this.crash > 0) return;
     const sp = this.speed;
     this.crash = 1; this.crashPhase = 'tumble'; this.crashT = 0; this.crashSpeed = sp;
@@ -1433,7 +1807,8 @@ export class Skier {
       const fall = Math.atan2(centerSlope(this.pos.z), 1);
       const hv = Math.hypot(this.vel.x, this.vel.z), dir = Math.atan2(this.vel.x, this.vel.z);
       const heading = hv > 2 && Math.abs(wrapAngle(dir - fall)) < 1.2 ? dir : fall;
-      const keep = Math.min(22, Math.max(hv, (this.crashSpeed ?? 0) * 0.4));
+      // (real: up again at whatever speed the slide has left)
+      const keep = this.real ? hv : Math.min(22, Math.max(hv, (this.crashSpeed ?? 0) * 0.4));
       this.place(this.pos.x, this.pos.z, heading, keep);
     }
     this.emit('recover');
@@ -1488,9 +1863,10 @@ export class Skier {
     const arc = this.world.arcade;
     // gravity along the rail, sliding friction on the metal (or the box's plastic);
     // in the park game the bars carry your speed and down rails add to it
-    const mu = arc ? (R.kind === 'box' ? 0.02 : 0.012) : R.kind === 'box' ? 0.075 : 0.05;
+    // (real: waxed bases on steel ~0.05, on a box's plastic ~0.09, and nothing keeps you going)
+    const mu = this.real ? (R.kind === 'box' ? 0.09 : 0.05) : arc ? (R.kind === 'box' ? 0.02 : 0.012) : R.kind === 'box' ? 0.075 : 0.05;
     g.v += (-GRAV * sl * il - mu * GRAV * il - 0.002 * g.v * g.v) * dt;
-    if (arc) g.v = Math.max(g.v, 3);
+    if (arc && !this.real) g.v = Math.max(g.v, 3);
     g.s += g.v * il * dt;
     if (arc) {
       // A/D turn the slide a quarter at a time: every turn is a swap
@@ -1564,7 +1940,7 @@ export class Skier {
     this.grind = null; this.grindCool = 0.35;
     const dist = Math.max(0, g.s - g.d0);
     this.onGround = false; this.airTime = 0.13; this.spin = 0; this.pitch = 0; this.flipAcc = 0; this.flipVel = 0; this.grabTime = 0; this.guide = null;
-    this.air7Live = false;
+    this.air7Live = false; this.airReal = false;
     this.takeoffY = this.maxY = this.pos.y; this.maxAirY = 0; this.takeoffX = this.pos.x; this.takeoffZ = this.pos.z;
     this.takeoffSwitch = this.board ? !!this.boardSwitch : Math.abs(wrapAngle(this.heading - g.R.yaw)) > Math.PI / 2;
     this.fromRail = true;
@@ -1575,6 +1951,9 @@ export class Skier {
       // the slide's rotation carries on off the end: spin out of it to land straight
       this.spin = 0;
       this.grabs = {}; this.trickType = null; this.flipAxis.set(1, 0, 0);
+      // (real: off the end of the bar the body flies free like any takeoff, the window to start a
+      // spin open as he leaves it)
+      if (this.real && !fell) { this.airTime = 0; this.airReal = true; this.realTakeoff(_t2.copy(this.vel).setY(0)); }
     } else if (Math.abs(g.side) === Math.PI / 2) this.heading = g.R.yaw + (Math.random() < 0.5 ? 0 : Math.PI); // ride away facing down the hill
     if (fell) {
       this.pos.x += Math.sign(g.bal) * 0.4;
@@ -1655,6 +2034,9 @@ export class Skier {
       _m.makeRotationAxis(_n.set(-this.tumbleAxis.z, 0, this.tumbleAxis.x), this.cartAngle);
       g.quaternion.premultiply(new THREE.Quaternion().setFromRotationMatrix(_m)).premultiply(_q2);
       lie = this.lie;
+    } else if (this.airReal && !this.onGround) {
+      // (the free body's own orientation, in the world)
+      g.quaternion.copy(this.fb.q);
     } else if (this.air7Live && !this.onGround) {
       g.quaternion.copy(_q).multiply(this.air7.q);
     } else if (this.pitch !== 0) {

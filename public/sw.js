@@ -2,13 +2,13 @@
 // from the network when there is one (so a new version shows up straight away), the built code
 // (its names change with every version) from the cache for good, and the textures, people,
 // skies and art from the cache at once while a fresh copy comes down for next time.
-const CACHE = 'stomped-v2';
+const CACHE = 'fallline-v1';
 const KEEP = /\/assets\//;
 const SWR = /\/(tex|people|sky|art|trees|models)\/|fonts\.(googleapis|gstatic)\.com/;
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil((async () => {
-  for (const k of await caches.keys()) if (k !== CACHE) await caches.delete(k);
+  for (const k of await caches.keys()) if (k !== CACHE && k.startsWith('fallline-')) await caches.delete(k);
   await self.clients.claim();
 })()));
 

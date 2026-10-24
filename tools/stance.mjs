@@ -5,7 +5,7 @@ import { CHROME, ANGLE } from './chrome.mjs';
 const plan = process.argv[2] ?? 'none:4000,ArrowLeft:1500,ArrowRight:1500,none:1500';
 const b = await chromium.launch({ executablePath: CHROME, headless: true, args: [ANGLE, '--enable-gpu', '--ignore-gpu-blocklist'] });
 const page = await b.newPage({ viewport: { width: 640, height: 360 } });
-await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5260}/?menu=0&mode=run&tod=bluebird&lift=0${process.env.Q ?? ''}`);
+await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5270}/?menu=0&mode=run&tod=bluebird&lift=0${process.env.Q ?? ''}`);
 await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
 await page.waitForTimeout(1000);
 const probe = () => page.evaluate(() => {

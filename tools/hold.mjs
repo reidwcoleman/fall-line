@@ -6,7 +6,7 @@ const [keys = 'ArrowLeft', hold = '900', jump = 'Large', delay = '0'] = process.
 const browser = await chromium.launch({ executablePath: CHROME, headless: true, args: [ANGLE, '--enable-gpu', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5260}/?menu=0&mode=${process.env.MODE ?? 'park'}&tod=bluebird&gear=${process.env.GEAR ?? 'ski'}`, { waitUntil: 'domcontentloaded' });
+await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5270}/?menu=0&mode=${process.env.MODE ?? 'park'}&tod=bluebird&gear=${process.env.GEAR ?? 'ski'}`, { waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
 if (process.env.SCORE) await page.evaluate((v) => { window.SCORE0 = v; }, +process.env.SCORE);
 const lip = await page.evaluate((jump) => {

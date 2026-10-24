@@ -563,7 +563,7 @@ export function resolveParkId() {
   try {
     if (typeof window !== 'undefined' && window.location) {
       id = new URLSearchParams(window.location.search).get('park');
-      if (!id) id = window.localStorage?.getItem('alpenglow.park');
+      if (!id) id = window.localStorage?.getItem('fallline.park');
     } else if (typeof self !== 'undefined' && typeof self.name === 'string' && self.name.startsWith('park=')) {
       id = self.name.slice(5);
     } else if (typeof process !== 'undefined') {

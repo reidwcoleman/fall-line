@@ -2,9 +2,9 @@
 // pass, the item catalogue (locker + shop), the kit you wear, the daily challenge and the
 // best runs per park. All of it is kept in this browser's localStorage.
 export const store = {
-  get(k, d) { try { const v = localStorage.getItem('alpenglow.' + k); return v == null ? d : v; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('alpenglow.' + k, v); } catch { /* private mode */ } },
-  json(k, d) { try { const v = localStorage.getItem('alpenglow.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  get(k, d) { try { const v = localStorage.getItem('fallline.' + k); return v == null ? d : v; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('fallline.' + k, v); } catch { /* private mode */ } },
+  json(k, d) { try { const v = localStorage.getItem('fallline.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
   put(k, v) { this.set(k, JSON.stringify(v)); },
 };
 
@@ -169,7 +169,7 @@ const GOLD_DEFS = [
   ['trail', 'Prism', 0xff4f8b, 0x22e0ff, 0, { fx: 'rainbow' }], ['jacket', 'Vapor', 0xff7ad9, 0x5bd8ff, 5], ['skis', 'Tiger King', 0xffd21e, 0x1b1d24, 0, { design: 'tiger' }],
   ['head', 'Halo Beanie', 0xfff2b0, null, 0, { beanie: true, pom: true }], ['goggles', 'Prism Mirror', 0xb39ddb, 0x22e0ff], ['deck', 'Molten', 0x1b1d24, 0xff6a12, 0, { design: 'split' }],
   ['jacket', 'Royal Puffer', 0x3b2a8a, 0xd9a520, 13], ['pants', 'Royal Camo', 0x3b2a8a, 0x1b1d24, 2], ['trail', 'Supernova', 0xffffff, 0xffd36b, 0, { fx: 'sparkle' }],
-  ['skis', 'Gold Standard Pro', 0xd9a520, 0xffffff, 0, { design: 'chevron' }], ['jacket', 'Stomped Gold', 0xd9a520, 0xffffff, 1], ['deck', 'Crown', 0xd9a520, 0x1b1d24, 0, { design: 'logo' }],
+  ['skis', 'Gold Standard Pro', 0xd9a520, 0xffffff, 0, { design: 'chevron' }], ['jacket', 'Fall Line Gold', 0xd9a520, 0xffffff, 1], ['deck', 'Crown', 0xd9a520, 0x1b1d24, 0, { design: 'logo' }],
   ['trail', 'Legend', 0xffd21e, 0xff4f8b, 0, { fx: 'rainbow' }],
 ];
 GOLD_DEFS.forEach(([cat, name, c, c2 = null, pat = 0, extra = {}], i) => ITEMS.push(I('gold-' + (i + 1), cat, name, 'gold', 0, c, c2, pat, { ...extra, level: i * 4 + 2 })));
@@ -307,7 +307,7 @@ export class Meta {
 
   // a brand new rider (after signing out)
   reset() {
-    for (const k of ['gold', 'flakes', 'xp', 'owned', 'kit', 'day', 'medals', 'lessons', 'quick', 'rev', 'runs.yard', 'runs.slope', 'runs.forest', 'runs.bigair']) { try { localStorage.removeItem('alpenglow.' + k); } catch { /* */ } }
+    for (const k of ['gold', 'flakes', 'xp', 'owned', 'kit', 'day', 'medals', 'lessons', 'quick', 'rev', 'runs.yard', 'runs.slope', 'runs.forest', 'runs.bigair']) { try { localStorage.removeItem('fallline.' + k); } catch { /* */ } }
     this.load();
     this.changed();
   }

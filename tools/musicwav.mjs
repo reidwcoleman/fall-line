@@ -5,7 +5,7 @@ import fs from 'node:fs';
 const [out = 'music.wav', mood = 'ride', secs = '30', track = '0'] = process.argv.slice(2);
 const b = await chromium.launch({ executablePath: CHROME, headless: true });
 const page = await b.newPage();
-await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5260}/tools/blank.html`).catch(() => {});
+await page.goto(`http://127.0.0.1:${process.env.PORT ?? 5270}/tools/blank.html`).catch(() => {});
 const res = await page.evaluate(async ([mood, secs, track]) => {
   const { Music, TRACKS } = await import('/src/music.js');
   const sr = 44100, ctx = new OfflineAudioContext(2, sr * secs, sr);

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Build every Blender asset: models them headless, bakes their shading, exports and meshopt-packs
 # them into public/models; then renders the occlusion on what the game still builds itself (bake).
-# Needs Blender 5.2 on the PATH (brew install --cask blender) and the dev server up on 5260.
+# Needs Blender 5.2 on the PATH (brew install --cask blender) and the dev server up on 5270.
 set -e
 cd "$(dirname "$0")/.."
 node blender/export_layout.mjs >/dev/null
